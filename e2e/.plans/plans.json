@@ -1,0 +1,688 @@
+{
+  "09166cf58244c2be": {
+    "step": "I should see 1 note in the list",
+    "actions": [
+      {
+        "kind": "expect_count",
+        "target": "notes in the list",
+        "count": 1
+      }
+    ],
+    "resolved": {},
+    "model": "qwen3:4b",
+    "createdAt": "2026-11-18T20:27:16.798Z"
+  },
+  "12702a7362d46185": {
+    "step": "I should see \"Wrong email or password.\"",
+    "actions": [
+      {
+        "kind": "expect_visible",
+        "target": "message",
+        "value": "Wrong email or password."
+      }
+    ],
+    "resolved": {},
+    "model": "qwen3:4b",
+    "createdAt": "2026-11-18T20:40:44.996Z"
+  },
+  "13a99a1ac6dfa3a0": {
+    "step": "a user \"ana@example.com\" with password \"s3cret!\" exists",
+    "actions": [
+      {
+        "kind": "call",
+        "fn": "POST /__test/users",
+        "args": {
+          "email": "ana@example.com",
+          "password": "s3cret!",
+          "name": "ana@example.com"
+        }
+      }
+    ],
+    "resolved": {},
+    "model": "qwen3:4b",
+    "createdAt": "2026-11-18T20:27:13.415Z"
+  },
+  "161b3aed47947ba3": {
+    "step": "I should see \"Sign in to your notes\"",
+    "actions": [
+      {
+        "kind": "expect_visible",
+        "target": "sign in screen",
+        "value": "Sign in to your notes"
+      }
+    ],
+    "resolved": {},
+    "model": "qwen3:4b",
+    "createdAt": "2026-11-18T20:40:56.384Z"
+  },
+  "1b598260fda9a96d": {
+    "step": "create a note with title \"Olive oil\" and description \"Extra virgin olive oil\" via API",
+    "actions": [
+      {
+        "kind": "call",
+        "fn": "POST /__test/notes",
+        "args": {
+          "ownerEmail": "bo@example.com",
+          "title": "Olive oil",
+          "description": "Extra virgin olive oil",
+          "done": false
+        }
+      }
+    ],
+    "resolved": {},
+    "model": "qwen3:4b",
+    "createdAt": "2026-11-18T20:26:59.917Z"
+  },
+  "1fe9afbf1795b544": {
+    "step": "I should see \"My notes\"",
+    "actions": [
+      {
+        "kind": "expect_visible",
+        "target": "header",
+        "value": "My notes"
+      }
+    ],
+    "resolved": {},
+    "model": "qwen3:4b",
+    "createdAt": "2026-11-18T20:40:26.618Z"
+  },
+  "2c0cc75d883aeade": {
+    "step": "create a note with title \"Bo's secret\" and description \"Special secret\" via API",
+    "actions": [
+      {
+        "kind": "call",
+        "fn": "POST /__test/notes",
+        "args": {
+          "ownerEmail": "bo@example.com",
+          "title": "Bo's secret",
+          "description": "Special secret",
+          "done": false
+        }
+      }
+    ],
+    "resolved": {},
+    "model": "qwen3:4b",
+    "createdAt": "2026-11-18T20:27:06.115Z"
+  },
+  "310e0311adcd95cb": {
+    "step": "I add a note \"Call the plumber\"",
+    "actions": [
+      {
+        "kind": "fill",
+        "target": "New note field",
+        "value": "Call the plumber"
+      },
+      {
+        "kind": "tap",
+        "target": "Add note button"
+      }
+    ],
+    "resolved": {
+      "mobile:New note field": {
+        "testId": "notes-new",
+        "role": "textbox",
+        "name": "New note"
+      },
+      "mobile:Add note button": {
+        "testId": "notes-add",
+        "role": "button",
+        "name": "Add note"
+      },
+      "web:New note field": {
+        "role": "textbox",
+        "name": "New note"
+      },
+      "web:Add note button": {
+        "role": "button",
+        "name": "Add note"
+      }
+    },
+    "model": "qwen3:4b",
+    "createdAt": "2026-11-18T20:27:19.710Z"
+  },
+  "3a520a3a88e1a091": {
+    "step": "I should see \"Bo's secret\" as a note",
+    "actions": [
+      {
+        "kind": "expect_visible",
+        "target": "note",
+        "value": "Bo's secret"
+      }
+    ],
+    "resolved": {},
+    "model": "qwen3:4b",
+    "createdAt": "2026-11-18T20:27:12.126Z"
+  },
+  "3f5cfa3ce79f90bf": {
+    "step": "I am signed in as \"ana@example.com\"",
+    "actions": [
+      {
+        "kind": "call",
+        "fn": "POST /auth/login",
+        "args": {
+          "email": "ana@example.com",
+          "password": "s3cret!"
+        }
+      },
+      {
+        "kind": "open",
+        "route": "notes-session"
+      }
+    ],
+    "resolved": {},
+    "model": "qwen3:4b",
+    "createdAt": "2026-11-18T20:27:07.582Z"
+  },
+  "4574631c6b5c47e0": {
+    "step": "I should not see \"My notes\"",
+    "actions": [
+      {
+        "kind": "expect_hidden",
+        "target": "note",
+        "value": "My notes"
+      }
+    ],
+    "resolved": {},
+    "model": "qwen3:4b",
+    "createdAt": "2026-11-18T20:40:45.697Z"
+  },
+  "5904945a62d31ac7": {
+    "step": "I should see \"Pay rent\"",
+    "actions": [
+      {
+        "kind": "expect_visible",
+        "target": "message",
+        "value": "Pay rent"
+      }
+    ],
+    "resolved": {},
+    "model": "qwen3:4b",
+    "createdAt": "2026-11-18T20:27:28.660Z"
+  },
+  "6c61483311f1ef35": {
+    "step": "I should see \"Call the plumber\"",
+    "actions": [
+      {
+        "kind": "expect_visible",
+        "target": "message",
+        "value": "Call the plumber"
+      }
+    ],
+    "resolved": {},
+    "model": "qwen3:4b",
+    "createdAt": "2026-11-18T20:27:20.625Z"
+  },
+  "7d8abd6aa64f85a4": {
+    "step": "create a note with title \"Eggs\" and description \"Chicken Eggs\" via API",
+    "actions": [
+      {
+        "kind": "call",
+        "fn": "POST /__test/notes",
+        "args": {
+          "ownerEmail": "bo@example.com",
+          "title": "Eggs",
+          "description": "Chicken Eggs",
+          "done": false
+        }
+      }
+    ],
+    "resolved": {},
+    "model": "qwen3:4b",
+    "createdAt": "2026-11-18T20:26:57.126Z"
+  },
+  "9234ca4b80f33a84": {
+    "step": "do not allow firebase user analytics",
+    "when": [
+      "Help us improve Pocket Notes"
+    ],
+    "actions": [
+      {
+        "kind": "tap",
+        "target": "No thanks button"
+      }
+    ],
+    "resolved": {
+      "mobile:No thanks button": {
+        "testId": "consent-deny",
+        "role": "button",
+        "name": "NO THANKS"
+      }
+    },
+    "model": "qwen3:4b",
+    "createdAt": "2026-11-18T22:29:14.253Z"
+  },
+  "97262fb846d70492": {
+    "step": "I sign in as \"ana@example.com\" with password \"s3cret!\"",
+    "actions": [
+      {
+        "kind": "fill",
+        "target": "Email field",
+        "value": "ana@example.com"
+      },
+      {
+        "kind": "fill",
+        "target": "Password field",
+        "value": "s3cret!"
+      },
+      {
+        "kind": "tap",
+        "target": "Sign in button"
+      }
+    ],
+    "resolved": {
+      "mobile:Email field": {
+        "testId": "signin-email",
+        "role": "textbox",
+        "name": "Email"
+      },
+      "mobile:Password field": {
+        "testId": "signin-password",
+        "role": "textbox",
+        "name": "Password"
+      },
+      "mobile:Sign in button": {
+        "testId": "signin-submit",
+        "role": "button",
+        "name": "SIGN IN"
+      },
+      "web:Email field": {
+        "role": "textbox",
+        "name": "Email"
+      },
+      "web:Password field": {
+        "role": "textbox",
+        "name": "Password"
+      },
+      "web:Sign in button": {
+        "role": "button",
+        "name": "Sign in"
+      }
+    },
+    "model": "qwen3:4b",
+    "createdAt": "2026-11-18T20:40:23.017Z"
+  },
+  "99aa3ba68a0ec10f": {
+    "step": "\"ana@example.com\" has a note \"Buy milk\"",
+    "actions": [
+      {
+        "kind": "call",
+        "fn": "POST /__test/notes",
+        "args": {
+          "ownerEmail": "ana@example.com",
+          "title": "Buy milk",
+          "done": false
+        }
+      }
+    ],
+    "resolved": {},
+    "model": "qwen3:4b",
+    "createdAt": "2026-11-18T20:27:14.599Z"
+  },
+  "9c3229b37934845e": {
+    "step": "I add a note \"Book dentist\"",
+    "actions": [
+      {
+        "kind": "fill",
+        "target": "New note field",
+        "value": "Book dentist"
+      },
+      {
+        "kind": "tap",
+        "target": "Add note button"
+      }
+    ],
+    "resolved": {
+      "mobile:New note field": {
+        "testId": "notes-new",
+        "role": "textbox",
+        "name": "New note"
+      },
+      "mobile:Add note button": {
+        "testId": "notes-add",
+        "role": "button",
+        "name": "Add note"
+      },
+      "web:New note field": {
+        "role": "textbox",
+        "name": "New note"
+      },
+      "web:Add note button": {
+        "role": "button",
+        "name": "Add note"
+      }
+    },
+    "model": "qwen3:4b",
+    "createdAt": "2026-11-18T20:27:31.467Z"
+  },
+  "a8c8b2fee39b26ec": {
+    "step": "create a user \"bo@example.com\" with password \"pa55word\" via API",
+    "actions": [
+      {
+        "kind": "call",
+        "fn": "POST /__test/users",
+        "args": {
+          "email": "bo@example.com",
+          "password": "pa55word"
+        }
+      }
+    ],
+    "resolved": {},
+    "model": "qwen3:4b",
+    "createdAt": "2026-11-18T20:26:55.894Z"
+  },
+  "ae73a1777e8385b6": {
+    "step": "I should see \"Signed in as ana@example.com\"",
+    "actions": [
+      {
+        "kind": "expect_visible",
+        "target": "message",
+        "value": "Signed in as ana@example.com"
+      }
+    ],
+    "resolved": {},
+    "model": "qwen3:4b",
+    "createdAt": "2026-11-18T20:41:35.128Z"
+  },
+  "b26e906974f1e82e": {
+    "step": "I should see \"Book dentist\"",
+    "actions": [
+      {
+        "kind": "expect_visible",
+        "target": "message",
+        "value": "Book dentist"
+      }
+    ],
+    "resolved": {},
+    "model": "qwen3:4b",
+    "createdAt": "2026-11-18T20:27:32.317Z"
+  },
+  "b66021f226ff8675": {
+    "step": "I should see \"Olive oil\" as a note",
+    "actions": [
+      {
+        "kind": "expect_visible",
+        "target": "note",
+        "value": "Olive oil"
+      }
+    ],
+    "resolved": {},
+    "model": "qwen3:4b",
+    "createdAt": "2026-11-18T20:27:03.153Z"
+  },
+  "b71bbe3484707851": {
+    "step": "I delete the note \"Buy milk\"",
+    "actions": [
+      {
+        "kind": "tap",
+        "target": "Delete button of note",
+        "value": "Buy milk"
+      }
+    ],
+    "resolved": {
+      "mobile:Delete button of note \"Buy milk\"": {
+        "testId": "note-delete-n2",
+        "role": "button",
+        "name": "Delete Buy milk"
+      },
+      "web:Delete button of note \"Buy milk\"": {
+        "role": "button",
+        "name": "Delete Buy milk"
+      }
+    },
+    "model": "qwen3:4b",
+    "createdAt": "2026-11-18T20:27:23.757Z"
+  },
+  "bb51fefc92e6617b": {
+    "step": "I am signed in as \"bo@example.com\"",
+    "actions": [
+      {
+        "kind": "call",
+        "fn": "POST /auth/login",
+        "args": {
+          "email": "bo@example.com",
+          "password": "pa55word"
+        }
+      },
+      {
+        "kind": "open",
+        "route": "notes-session"
+      }
+    ],
+    "resolved": {},
+    "model": "qwen3:4b",
+    "createdAt": "2026-11-18T20:27:01.401Z"
+  },
+  "beb3d7b283c83b3e": {
+    "step": "I should not see \"Bo's secret\"",
+    "actions": [
+      {
+        "kind": "expect_hidden",
+        "target": "note",
+        "value": "Bo's secret"
+      }
+    ],
+    "resolved": {},
+    "model": "qwen3:4b",
+    "createdAt": "2026-11-18T20:27:09.474Z"
+  },
+  "c23f37de0310d8f7": {
+    "step": "I should see \"No notes yet. Add your first one.\"",
+    "actions": [
+      {
+        "kind": "expect_visible",
+        "target": "message",
+        "value": "No notes yet. Add your first one."
+      }
+    ],
+    "resolved": {},
+    "model": "qwen3:4b",
+    "createdAt": "2026-11-18T20:27:08.565Z"
+  },
+  "c91aa127013359af": {
+    "step": "I sign out",
+    "actions": [
+      {
+        "kind": "tap",
+        "target": "Sign out button"
+      }
+    ],
+    "resolved": {
+      "mobile:Sign out button": {
+        "testId": "notes-signout",
+        "role": "button",
+        "name": "SIGN OUT"
+      },
+      "web:Sign out button": {
+        "role": "button",
+        "name": "Sign out"
+      }
+    },
+    "model": "qwen3:4b",
+    "createdAt": "2026-11-18T20:40:55.408Z"
+  },
+  "d3d617f519720aa4": {
+    "step": "I add a note \"Pay rent\"",
+    "actions": [
+      {
+        "kind": "fill",
+        "target": "New note field",
+        "value": "Pay rent"
+      },
+      {
+        "kind": "tap",
+        "target": "Add note button"
+      }
+    ],
+    "resolved": {
+      "mobile:New note field": {
+        "testId": "notes-new",
+        "role": "textbox",
+        "name": "New note"
+      },
+      "mobile:Add note button": {
+        "testId": "notes-add",
+        "role": "button",
+        "name": "Add note"
+      },
+      "web:New note field": {
+        "role": "textbox",
+        "name": "New note"
+      },
+      "web:Add note button": {
+        "role": "button",
+        "name": "Add note"
+      }
+    },
+    "model": "qwen3:4b",
+    "createdAt": "2026-11-18T20:27:27.784Z"
+  },
+  "d570a808b17d422d": {
+    "step": "I open the sign in screen",
+    "actions": [
+      {
+        "kind": "open",
+        "route": "signin"
+      }
+    ],
+    "resolved": {},
+    "model": "qwen3:4b",
+    "createdAt": "2026-11-18T20:40:21.684Z"
+  },
+  "da19566c692c99d8": {
+    "step": "I should not see \"Buy milk\"",
+    "actions": [
+      {
+        "kind": "expect_hidden",
+        "target": "note",
+        "value": "Buy milk"
+      }
+    ],
+    "resolved": {},
+    "model": "qwen3:4b",
+    "createdAt": "2026-11-18T20:27:24.605Z"
+  },
+  "deaae54b6da9fadd": {
+    "step": "I sign in as \"ana@example.com\" with password \"not-it\"",
+    "actions": [
+      {
+        "kind": "fill",
+        "target": "Email field",
+        "value": "ana@example.com"
+      },
+      {
+        "kind": "fill",
+        "target": "Password field",
+        "value": "not-it"
+      },
+      {
+        "kind": "tap",
+        "target": "Sign in button"
+      }
+    ],
+    "resolved": {
+      "mobile:Email field": {
+        "testId": "signin-email",
+        "role": "textbox",
+        "name": "Email"
+      },
+      "mobile:Password field": {
+        "testId": "signin-password",
+        "role": "textbox",
+        "name": "Password"
+      },
+      "mobile:Sign in button": {
+        "testId": "signin-submit",
+        "role": "button",
+        "name": "SIGN IN"
+      },
+      "web:Email field": {
+        "role": "textbox",
+        "name": "Email"
+      },
+      "web:Password field": {
+        "role": "textbox",
+        "name": "Password"
+      },
+      "web:Sign in button": {
+        "role": "button",
+        "name": "Sign in"
+      }
+    },
+    "model": "qwen3:4b",
+    "createdAt": "2026-11-18T20:40:41.449Z"
+  },
+  "e1e6df0cc7e6d137": {
+    "step": "I should see \"Buy milk\"",
+    "actions": [
+      {
+        "kind": "expect_visible",
+        "target": "note",
+        "value": "Buy milk"
+      }
+    ],
+    "resolved": {},
+    "model": "qwen3:4b",
+    "createdAt": "2026-11-18T20:27:15.907Z"
+  },
+  "eac625c39df4dceb": {
+    "step": "create a note with title \"Bread\" and description \"Wholemeal bread\" via API",
+    "actions": [
+      {
+        "kind": "call",
+        "fn": "POST /__test/notes",
+        "args": {
+          "ownerEmail": "bo@example.com",
+          "title": "Bread",
+          "description": "Wholemeal bread",
+          "done": false
+        }
+      }
+    ],
+    "resolved": {},
+    "model": "qwen3:4b",
+    "createdAt": "2026-11-18T20:26:58.607Z"
+  },
+  "ead12f1a1b906091": {
+    "step": "I should see 2 notes in the list",
+    "actions": [
+      {
+        "kind": "expect_count",
+        "target": "notes in the list",
+        "count": 2
+      }
+    ],
+    "resolved": {},
+    "model": "qwen3:4b",
+    "createdAt": "2026-11-18T20:27:21.475Z"
+  },
+  "eb0fc21270c0fc31": {
+    "step": "I should see 3 notes in the list",
+    "actions": [
+      {
+        "kind": "expect_count",
+        "target": "notes in the list",
+        "count": 3
+      }
+    ],
+    "resolved": {},
+    "model": "qwen3:4b",
+    "createdAt": "2026-11-18T20:27:02.273Z"
+  },
+  "f4b372c2467a2bc0": {
+    "step": "create a user \"ana@example.com\" with password \"s3cret!\" via API",
+    "actions": [
+      {
+        "kind": "call",
+        "fn": "POST /__test/users",
+        "args": {
+          "email": "ana@example.com",
+          "password": "s3cret!",
+          "name": "ana@example.com"
+        }
+      }
+    ],
+    "resolved": {},
+    "model": "qwen3:4b",
+    "createdAt": "2026-11-18T20:27:04.474Z"
+  }
+}

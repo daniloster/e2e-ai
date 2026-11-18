@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Release readiness</title>
+<!-- The pocket model reads this brief to fit the run's data to this template (view plan + texts). -->
+<script type="text/x-e2e-ai-brief">
+Audience: a product owner or team lead deciding whether the build can ship. No technical detail:
+they want a one-line verdict, the health of each team or area (tags such as #team-atlas, #smoke,
+#security), and, only if something failed, which user-facing behaviour is broken. Prefer grouping
+by tag; use feature when there are no team tags. Sort failed first. Do not expand anything. Show the
+summary first, then health, then failures; the scenario list is optional. Media: show only the
+screen where each failure happened ("failures-only"); videos are for engineers.
+</script>
+<style>
+  :root { --bg:#fbfaf7; --panel:#fff; --ink:#1c1b19; --muted:#6b6862; --line:#e7e3da; --pass:#2f7d4f; --fail:#b8322a; --ai:#5b46c8; --soft:#f3f0e8; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#131211; --panel:#1b1a18; --ink:#efece6; --muted:#a39f97; --line:#2e2c28; --pass:#5cc58b; --fail:#ff7a6e; --ai:#a998ff; --soft:#23211e; } }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.55 Georgia, "Iowan Old Style", "Times New Roman", serif; }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 40px 16px 64px; }
+  .eyebrow { font: 600 12px/1 system-ui, sans-serif; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); }
+  h1 { font-size: 34px; line-height: 1.15; margin: 10px 0 6px; font-weight: 600; }
+  .verdict { display:inline-block; font:700 13px/1 system-ui, sans-serif; letter-spacing:.06em; padding:8px 14px; border-radius:999px; margin-top:8px; }
+  .verdict.ok { background: color-mix(in srgb, var(--pass) 14%, transparent); color: var(--pass); }
+  .verdict.ko { background: color-mix(in srgb, var(--fail) 14%, transparent); color: var(--fail); }
+  section { margin-top: 28px; }
+  h2 { font: 600 13px/1 system-ui, sans-serif; letter-spacing:.1em; text-transform: uppercase; color: var(--muted); margin: 0 0 12px; }
+  .summary { font-size: 19px; }
+  .ainote { font: 12.5px system-ui, sans-serif; color: var(--muted); margin-top: 6px; }
+  .nums { display:grid; grid-template-columns: repeat(auto-fit, minmax(150px,1fr)); gap: 1px; background: var(--line); border:1px solid var(--line); border-radius: 12px; overflow:hidden; }
+  .nums div { background: var(--panel); padding: 16px; }
+  .nums b { display:block; font: 700 30px/1.1 system-ui, sans-serif; font-variant-numeric: tabular-nums; }
+  .nums span { font: 13px system-ui, sans-serif; color: var(--muted); }
+  table { width:100%; border-collapse: collapse; font: 15px system-ui, sans-serif; background: var(--panel); border:1px solid var(--line); border-radius: 12px; overflow:hidden; }
+  th, td { padding: 10px 14px; border-bottom: 1px solid var(--line); text-align:left; }
+  th { font-size: 12px; text-transform: uppercase; letter-spacing:.06em; color: var(--muted); background: var(--soft); }
+  td.num { text-align:right; font-variant-numeric: tabular-nums; }
+  .meter { height: 8px; border-radius: 999px; background: color-mix(in srgb, var(--fail) 25%, transparent); overflow:hidden; min-width: 120px; }
+  .meter i { display:block; height:100%; background: var(--pass); }
+  .fail-item { background: var(--panel); border:1px solid var(--line); border-left: 4px solid var(--fail); border-radius: 10px; padding: 14px 16px; margin-bottom: 10px; font-family: system-ui, sans-serif; }
+  .fail-item .what { font-weight: 600; }
+  .fail-item .why { color: var(--muted); font-size: 14.5px; margin-top: 4px; }
+  .fail-item { display: grid; grid-template-columns: 1fr auto; gap: 14px; align-items: start; }
+  .fail-item img { width: 96px; height: 170px; object-fit: cover; object-position: top; border-radius: 8px; border: 1px solid var(--line); }
+  .fail-item a { font-size: 13px; }
+  ul.list { list-style:none; margin:0; padding:0; font-family: system-ui, sans-serif; }
+  ul.list li { padding: 8px 0; border-bottom: 1px solid var(--line); display:flex; justify-content:space-between; gap:12px; }
+  .dot { display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:8px; }
+  .dot.passed { background: var(--pass); } .dot.failed { background: var(--fail); }
+  footer { margin-top: 36px; font: 12.5px system-ui, sans-serif; color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="wrap" id="sections" data-e2e-ai-group-options="tag,feature,status" data-e2e-ai-media-options="failures-only,none">
+  <header>
+    <div class="eyebrow" id="eyebrow"></div>
+    <h1 id="headline">Release readiness</h1>
+    <span class="verdict" id="verdict"></span>
+  </header>
+
+  <section data-section="summary">
+    <h2>In short</h2>
+    <p class="summary" data-ai="summary"
+       data-ai-prompt="Write 2-3 plain sentences for a product owner deciding whether to ship: the verdict, which areas are healthy, and (only if something failed) which user-facing behaviour is broken. No technical terms, no file names.">The summary is generated after the run.</p>
+    <div class="ainote" id="ainote"></div>
+  </section>
+
+  <section data-section="numbers" data-required>
+    <h2>At a glance</h2>
+    <div class="nums" id="nums"></div>
+  </section>
+
+  <section data-section="health">
+    <h2 id="health-title">Health</h2>
+    <table><thead><tr><th id="health-col">Area</th><th></th><th class="num">Passed</th><th class="num">Failed</th></tr></thead><tbody id="health"></tbody></table>
+  </section>
+
+  <section data-section="failures">
+    <h2>What is broken</h2>
+    <div data-ai="failure-notes" data-ai-each="failure"
+         data-ai-prompt="In one sentence a product owner understands, say which user-facing behaviour is broken. No code, no file names, no error text."></div>
+    <div id="failures"></div>
+  </section>
+
+  <section data-section="scenarios">
+    <h2>All checks</h2>
+    <ul class="list" id="scenarios"></ul>
+  </section>
+
+  <footer id="footer"></footer>
+</div>
+<script>
+const DATA = /*__REPORT_DATA__*/null;
+(function () {
+  "use strict";
+  if (!DATA) return;
+  const $ = (s) => document.querySelector(s);
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const T = DATA.totals, V = DATA.ai.view || { groupBy: "tag", sortBy: "failed-first", sections: [], highlight: [], headline: "" };
+  document.title = `${T.failed ? "Not ready" : "Ready"} — ${DATA.title}`;
+  $("#eyebrow").textContent = `${DATA.title} · ${new Date(DATA.startedAt).toLocaleDateString()} · ${DATA.run.platform}`;
+  $("#headline").textContent = V.headline || (T.failed ? `${T.failed} of ${T.scenarios} checks failed` : `All ${T.scenarios} checks passed`);
+  const v = $("#verdict"); v.textContent = T.failed ? "NOT READY TO SHIP" : "READY TO SHIP"; v.className = `verdict ${T.failed ? "ko" : "ok"}`;
+  const sum = DATA.ai.sections.summary;
+  if (sum) { document.querySelector('[data-ai="summary"]').textContent = sum.text; $("#ainote").textContent = sum.accepted ? `Written by ${sum.model} from the run data and checked against it.` : (sum.reason || ""); }
+  $("#nums").innerHTML = [[`${T.passRate}%`, "of checks passed"], [T.scenarios, "user journeys checked"], [T.failed, "broken"], [T.features, "areas"]]
+    .map(([n, l]) => `<div><b>${esc(n)}</b><span>${esc(l)}</span></div>`).join("");
+  // Health by the group the model chose for this template.
+  const all = DATA.features.flatMap((f) => f.scenarios.map((s) => ({ ...s, featureName: f.name })));
+  const key = V.groupBy || "tag";
+  $("#health-col").textContent = key === "tag" ? "Team / area" : key === "feature" ? "Area" : "Status";
+  const groups = new Map();
+  for (const s of all) {
+    const keys = key === "tag" ? (s.tags.length ? s.tags : ["(untagged)"]) : key === "feature" ? [s.featureName] : [s.status === "failed" ? "Broken" : "Working"];
+    for (const k of keys) { const g = groups.get(k) || { passed: 0, failed: 0 }; g[s.status === "failed" ? "failed" : "passed"]++; groups.set(k, g); }
+  }
+  $("#health").innerHTML = [...groups.entries()].sort((a, b) => b[1].failed - a[1].failed || a[0].localeCompare(b[0])).map(([k, g]) => {
+    const pct = (100 * g.passed) / (g.passed + g.failed);
+    return `<tr><td>${esc(k)}</td><td><div class="meter"><i style="width:${pct}%"></i></div></td><td class="num">${g.passed}</td><td class="num" style="color:${g.failed ? "var(--fail)" : "inherit"}">${g.failed}</td></tr>`;
+  }).join("");
+  $("#failures").innerHTML = DATA.failures.length ? DATA.failures.map((f) => {
+    const n = DATA.ai.failures[f.id];
+    const showMedia = (V.media || "failures-only") !== "none";
+    return `<div class="fail-item"><div><div class="what">${esc(f.scenario)}</div><div class="why">${n && n.accepted ? esc(n.text) : `Failed at: ${esc(f.step)}`}</div>${showMedia && f.video ? `<a href="index.html#${esc(f.id)}">Watch the recording in the technical report</a>` : ""}</div>${showMedia && f.screenshot ? `<a href="${esc(f.screenshot)}"><img src="${esc(f.screenshot)}" alt="What the person saw when it failed"/></a>` : ""}</div>`;
+  }).join("") : '<p style="font-family:system-ui;color:var(--muted)">Nothing is broken.</p>';
+  $("#scenarios").innerHTML = [...all].sort((a, b) => (a.status === b.status ? a.name.localeCompare(b.name) : a.status === "failed" ? -1 : 1))
+    .map((s) => `<li><span><span class="dot ${s.status}"></span>${esc(s.name)}</span><span style="color:var(--muted)">${esc(s.featureName)}</span></li>`).join("");
+  // Section order/visibility from the view plan (required sections always stay).
+  if (V.sections && V.sections.length) {
+    const host = $("#sections"), footer = $("#footer");
+    document.querySelectorAll("[data-section]").forEach((el) => { if (!V.sections.includes(el.dataset.section) && !el.hasAttribute("data-required")) el.remove(); });
+    V.sections.forEach((n) => { const el = document.querySelector(`[data-section="${n}"]`); if (el) host.insertBefore(el, footer); });
+  }
+  $("#footer").innerHTML = `Template <b>executive</b> · ${V.accepted ? `layout chosen by ${esc(V.model)} from the template brief` : "default layout"} · full technical report: <a href="index.html">index.html</a> · <a href="report.json">report.json</a>`;
+})();
+</script>
+</body>
+</html>

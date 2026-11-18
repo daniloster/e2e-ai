@@ -1,0 +1,4 @@
+Routine: user "${email}" has notes: ${table:notes[title, description]}
+
+each ${table:notes}
+create a note with title "${title}" and description "${description}" via API

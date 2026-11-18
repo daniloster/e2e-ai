@@ -1,0 +1,568 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>E2E run report</title>
+<!-- The pocket model reads this brief to fit the run's data to this template (view plan + texts). -->
+<script type="text/x-e2e-ai-brief">
+Audience: the engineers who own the app and its tests. They want to find and fix failures fast:
+what failed, at which step and file:line, from which routine, with the screenshot; then confidence
+that the rest is green. Prefer grouping by feature; group by routine when failures share a routine,
+by tag when failures cluster in one tag. Expand failed scenarios only. Highlight failures, then
+slow scenarios. Keep every section; put Failures right after the summary when anything failed.
+Media: every step has a screenshot (always shown collapsed below the step) and mobile scenarios
+have a video. Choose "filmstrip" to add a strip of all screens above each scenario's steps (useful
+when scenarios failed or have many steps), or "timeline" for steps only.
+</script>
+<!--
+  The report template (owned by the team; edit freely).
+  - Data: the runner replaces the REPORT_DATA marker below with the run's JSON (report.json).
+  - AI slots: elements with data-ai="<name>" and data-ai-prompt="<instructions>". The pocket model
+    reads each prompt and writes only that text; numbers, quoted names and file:line references are
+    checked against the run data, and rejected text falls back to a generated summary.
+    data-ai-each="failure" runs the prompt once per failed scenario.
+-->
+<style>
+  :root {
+    --bg: #f6f7f9; --panel: #ffffff; --panel-2: #f0f2f5; --ink: #14171c; --muted: #5d6673; --line: #e2e6eb;
+    --pass: #1f8f55; --pass-bg: #e6f5ec; --fail: #c8343c; --fail-bg: #fdeced; --skip: #8a93a0; --skip-bg: #eef0f3;
+    --warn: #a86400; --warn-bg: #fff3dd; --accent: #3b5bdb; --accent-bg: #e8edff; --ai: #7048e8; --ai-bg: #f1ecff;
+    --given: #0b7285; --when: #5f3dc4; --then: #b35c00;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    --radius: 12px; --shadow: 0 1px 2px rgba(16,24,40,.06), 0 1px 3px rgba(16,24,40,.08);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f1216; --panel: #171b21; --panel-2: #1e232b; --ink: #e8ebf0; --muted: #9aa4b2; --line: #2a313b;
+      --pass: #4cc38a; --pass-bg: #12291e; --fail: #ff6b72; --fail-bg: #331619; --skip: #7d8796; --skip-bg: #22272f;
+      --warn: #f2b14c; --warn-bg: #2f2410; --accent: #8ea6ff; --accent-bg: #1c2340; --ai: #b197fc; --ai-bg: #241d3d;
+      --given: #3bc9db; --when: #b197fc; --then: #ffa94d; --shadow: none;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  a { color: var(--accent); }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 24px 16px 64px; }
+  header.top { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end; justify-content: space-between; margin-bottom: 20px; }
+  h1 { font-size: 26px; margin: 0 0 6px; letter-spacing: -.01em; }
+  h2 { font-size: 17px; margin: 0 0 12px; }
+  .meta { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; border-radius: 999px; background: var(--panel-2); color: var(--muted); font-size: 12.5px; border: 1px solid var(--line); white-space: nowrap; }
+  .chip b { color: var(--ink); font-weight: 600; }
+  .verdict { font-size: 13px; font-weight: 700; padding: 6px 14px; border-radius: 999px; letter-spacing: .02em; }
+  .verdict.pass { background: var(--pass-bg); color: var(--pass); } .verdict.fail { background: var(--fail-bg); color: var(--fail); }
+  .grid { display: grid; gap: 12px; }
+  .kpis { grid-template-columns: 220px repeat(auto-fit, minmax(150px, 1fr)); margin-bottom: 16px; }
+  @media (max-width: 720px) { .kpis { grid-template-columns: 1fr 1fr; } .kpis .donut-card { grid-column: span 2; } }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 16px; }
+  .kpi .label { color: var(--muted); font-size: 12.5px; text-transform: uppercase; letter-spacing: .05em; }
+  .kpi .value { font-size: 28px; font-weight: 700; margin-top: 2px; font-variant-numeric: tabular-nums; }
+  .kpi .sub { color: var(--muted); font-size: 13px; }
+  .donut-card { display: flex; align-items: center; gap: 16px; }
+  .donut-card svg { flex: none; }
+  .bar { height: 8px; border-radius: 999px; background: var(--skip-bg); overflow: hidden; display: flex; }
+  .bar span { display: block; height: 100%; }
+  .ai { border-color: color-mix(in srgb, var(--ai) 35%, var(--line)); background: linear-gradient(0deg, var(--panel), var(--panel)), var(--ai-bg); margin-bottom: 16px; }
+  .ai-head { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; flex-wrap: wrap; }
+  .ai-badge { font-size: 12px; font-weight: 600; color: var(--ai); background: var(--ai-bg); border-radius: 999px; padding: 2px 10px; }
+  .ai-note { font-size: 12.5px; color: var(--muted); }
+  .ai p { margin: 0; white-space: pre-wrap; }
+  .toolbar { position: sticky; top: 0; z-index: 5; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 10px 0; background: var(--bg); margin: 8px 0 4px; }
+  .toolbar input[type=search] { flex: 1 1 240px; min-width: 0; padding: 8px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); font: inherit; }
+  .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--panel); }
+  .seg button, .btn { font: inherit; font-size: 13.5px; border: 0; background: transparent; color: var(--ink); padding: 7px 12px; cursor: pointer; }
+  .seg button[aria-pressed=true] { background: var(--accent-bg); color: var(--accent); font-weight: 600; }
+  .btn { border: 1px solid var(--line); border-radius: 10px; background: var(--panel); }
+  .tagbar { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+  .tag { font: 600 12.5px/1 var(--mono); padding: 5px 9px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--accent); cursor: pointer; }
+  .tag[aria-pressed=true] { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .tag .n { color: var(--muted); font-weight: 500; margin-left: 4px; }
+  .tag[aria-pressed=true] .n { color: #fff; opacity: .8; }
+  .tag.static { cursor: default; }
+  .failures .fcard { display: grid; grid-template-columns: 1fr auto; gap: 12px; padding: 12px 0; border-top: 1px solid var(--line); }
+  .failures .fcard:first-of-type { border-top: 0; padding-top: 0; }
+  .err { font: 13px/1.45 var(--mono); color: var(--fail); background: var(--fail-bg); border-radius: 8px; padding: 8px 10px; margin: 6px 0 0; white-space: pre-wrap; word-break: break-word; }
+  .thumb { width: 120px; height: 120px; object-fit: cover; object-position: top; border-radius: 8px; border: 1px solid var(--line); cursor: zoom-in; background: var(--panel-2); }
+  .feature { margin-bottom: 14px; padding: 0; overflow: hidden; }
+  .feature > .fhead { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center; padding: 14px 16px; border-bottom: 1px solid var(--line); }
+  .feature .fname { font-weight: 650; font-size: 16px; }
+  .path { font: 12.5px var(--mono); color: var(--muted); }
+  .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; flex: none; }
+  .dot.passed { background: var(--pass); } .dot.failed { background: var(--fail); } .dot.skipped { background: var(--skip); }
+  details.sc { border-top: 1px solid var(--line); }
+  details.sc:first-of-type { border-top: 0; }
+  details.sc > summary { list-style: none; cursor: pointer; display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; padding: 10px 16px; }
+  details.sc > summary::-webkit-details-marker { display: none; }
+  details.sc > summary:hover { background: var(--panel-2); }
+  details.sc > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .sname { font-weight: 550; }
+  .sname .group { color: var(--muted); font-weight: 400; font-size: 13px; margin-left: 6px; }
+  .right { display: flex; gap: 8px; align-items: center; color: var(--muted); font-size: 13px; white-space: nowrap; }
+  .chev { transition: transform .15s; color: var(--muted); }
+  details[open] > summary .chev { transform: rotate(90deg); }
+  .steps { padding: 4px 16px 14px 40px; display: grid; grid-template-columns: 1fr 260px; gap: 16px; }
+  @media (max-width: 720px) { .steps { grid-template-columns: 1fr; padding-left: 16px; } }
+  ol.timeline { list-style: none; margin: 0; padding: 0; position: relative; }
+  ol.timeline::before { content: ""; position: absolute; left: 5px; top: 8px; bottom: 8px; width: 2px; background: var(--line); }
+  .st { position: relative; padding: 6px 0 6px 22px; }
+  .st > .dot { position: absolute; left: 0; top: 13px; box-shadow: 0 0 0 3px var(--panel); }
+  .st .line1 { display: flex; flex-wrap: wrap; gap: 6px 8px; align-items: baseline; }
+  .kw { font: 700 11px/1 var(--mono); text-transform: uppercase; letter-spacing: .06em; padding: 3px 6px; border-radius: 5px; }
+  .kw.context { color: var(--given); background: color-mix(in srgb, var(--given) 12%, transparent); }
+  .kw.action { color: var(--when); background: color-mix(in srgb, var(--when) 12%, transparent); }
+  .kw.outcome { color: var(--then); background: color-mix(in srgb, var(--then) 12%, transparent); }
+  .kw.background { color: var(--muted); background: var(--panel-2); border: 1px dashed var(--line); }
+  .bg-block { border-left: 2px dashed var(--line); margin: 0 0 6px 2px; padding: 2px 0 2px 10px; }
+  .bg-title { font: 700 11px/1 var(--mono); letter-spacing: .08em; color: var(--muted); padding: 8px 0 2px 12px; }
+  .stext { font-weight: 500; word-break: break-word; }
+  .st.skipped .stext { color: var(--muted); }
+  .badge { font-size: 11.5px; padding: 1px 7px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
+  .badge.llm { color: var(--ai); border-color: color-mix(in srgb, var(--ai) 40%, var(--line)); }
+  .badge.cache { color: var(--pass); border-color: color-mix(in srgb, var(--pass) 40%, var(--line)); }
+  .origin { font: 12px var(--mono); color: var(--muted); margin-top: 2px; }
+  .origin .r { color: var(--given); }
+  .acts { margin: 4px 0 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 4px; }
+  .acts li { font: 12px var(--mono); background: var(--panel-2); border-radius: 6px; padding: 2px 7px; color: var(--muted); }
+  .acts li b { color: var(--ink); font-weight: 600; }
+  .fix { font-size: 12.5px; color: var(--warn); background: var(--warn-bg); border-radius: 6px; padding: 2px 8px; margin-top: 4px; display: inline-block; }
+  .fix.global { color: var(--ink); background: var(--surface-2, rgba(127,127,127,.12)); }
+  details.sc.hl > summary { box-shadow: inset 3px 0 0 var(--ai); }
+  .badge.hlb { color: var(--ai); border-color: color-mix(in srgb, var(--ai) 40%, var(--line)); }
+  select.btn { padding: 7px 10px; }
+  details.shot { margin-top: 4px; }
+  .shot-media { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-start; }
+  figure.clip { margin: 6px 0 0; }
+  figure.clip video { display: block; width: 260px; max-height: 460px; border-radius: 8px; border: 1px solid var(--line); background: #000; }
+  figure.clip figcaption { font: 11.5px var(--mono); color: var(--muted); margin-top: 3px; }
+  details.shot > summary { cursor: pointer; font-size: 12.5px; color: var(--accent); list-style: none; display: inline-flex; gap: 6px; align-items: center; }
+  details.shot > summary::-webkit-details-marker { display: none; }
+  details.shot > summary::before { content: "▸"; transition: transform .15s; }
+  details.shot[open] > summary::before { transform: rotate(90deg); }
+  details.shot.failed > summary { color: var(--fail); }
+  details.shot img { display: block; margin-top: 6px; max-width: 260px; max-height: 460px; border-radius: 8px; border: 1px solid var(--line); cursor: zoom-in; }
+  details.shot.failed img { border: 2px solid var(--fail); }
+  .sthumb { width: 54px; height: 96px; object-fit: cover; object-position: top; border-radius: 6px; border: 1px solid var(--line); cursor: zoom-in; float: right; margin: 2px 0 4px 10px; background: var(--panel-2); }
+  .st.failed .sthumb { border: 2px solid var(--fail); }
+  .seek { font: 600 11.5px var(--mono); color: var(--accent); background: var(--accent-bg); border: 0; border-radius: 6px; padding: 2px 7px; cursor: pointer; }
+  .media { display: grid; gap: 10px; align-content: start; }
+  .media video { width: 100%; max-height: 420px; border-radius: 10px; border: 1px solid var(--line); background: #000; }
+  .strip { display: flex; gap: 6px; overflow-x: auto; padding: 4px 16px 12px 40px; scroll-snap-type: x proximity; }
+  .strip figure { margin: 0; flex: none; scroll-snap-align: start; text-align: center; }
+  .strip img { width: 72px; height: 128px; object-fit: cover; object-position: top; border-radius: 6px; border: 1px solid var(--line); cursor: zoom-in; display: block; }
+  .strip figure.failed img { border: 2px solid var(--fail); }
+  .strip figcaption { font: 11px var(--mono); color: var(--muted); margin-top: 2px; }
+  .lb-bar { display: flex; gap: 8px; justify-content: center; align-items: center; margin-top: 8px; }
+  .lb-bar button { font: 600 13px system-ui; border: 0; border-radius: 8px; padding: 6px 12px; cursor: pointer; background: #fff; color: #111; }
+  .lb-bar span { color: #fff; font-size: 12.5px; }
+  .routine-group { border-left: 2px dashed color-mix(in srgb, var(--given) 50%, transparent); margin: 2px 0 2px 2px; padding-left: 10px; }
+  .routine-title { font: 600 12.5px var(--mono); color: var(--given); padding: 6px 0 0 12px; }
+  .two { grid-template-columns: 1fr 1fr; }
+  @media (max-width: 860px) { .two { grid-template-columns: 1fr; } }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; font-size: 12.5px; text-transform: uppercase; letter-spacing: .04em; }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .empty { color: var(--muted); padding: 24px; text-align: center; }
+  dialog { border: 0; padding: 0; background: transparent; max-width: 96vw; max-height: 96vh; }
+  dialog::backdrop { background: rgba(0,0,0,.75); }
+  dialog img { max-width: 92vw; max-height: 88vh; border-radius: 10px; display: block; }
+  dialog p { color: #fff; text-align: center; font-size: 13px; margin: 8px 0 0; }
+  footer { color: var(--muted); font-size: 12.5px; margin-top: 28px; }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  @media print { .toolbar, .tagbar { display: none; } details.sc { break-inside: avoid; } }
+</style>
+</head>
+<body>
+<div class="wrap" id="sections" data-e2e-ai-group-options="feature,routine,tag,status" data-e2e-ai-media-options="timeline,filmstrip">
+  <header class="top">
+    <div>
+      <h1 id="title">E2E run report</h1>
+      <p id="headline" style="margin:0 0 8px;font-size:16px;color:var(--muted)"></p>
+      <div class="meta" id="meta"></div>
+    </div>
+    <span id="verdict" class="verdict"></span>
+  </header>
+
+  <section class="grid kpis" id="kpis" aria-label="Totals" data-section="kpis" data-pinned></section>
+
+  <section class="card ai" aria-labelledby="ai-title" data-section="summary">
+    <div class="ai-head"><h2 id="ai-title" style="margin:0">Summary</h2><span class="ai-badge" id="ai-badge"></span><span class="ai-note" id="ai-note"></span></div>
+    <p data-ai="summary"
+       data-ai-prompt="Write 2-4 sentences for the engineers: the overall result first. If scenarios failed, name them exactly as in the data, say at which step and which routine, and which one to fix first. If nothing failed, say so plainly and mention how many steps came from cached plans or were planned by the model.">The summary is generated after the run.</p>
+  </section>
+
+  <section class="card failures" id="failures" aria-labelledby="f-title" data-section="failures" hidden>
+    <h2 id="f-title">Failures</h2>
+    <div data-ai="failure-notes" data-ai-each="failure"
+         data-ai-prompt="In one or two sentences, explain the most likely cause of this failure from the step, the error and the routine it came from, and suggest where to look. Say 'unclear' if the data does not show it."></div>
+    <div id="failure-list"></div>
+  </section>
+
+  <section data-section="scenarios" data-required aria-label="Scenarios">
+  <div class="toolbar" role="toolbar" aria-label="Filters">
+    <label class="sr" for="q">Search</label>
+    <input id="q" type="search" placeholder="Search features, scenarios, steps, errors…" autocomplete="off" />
+    <div class="seg" role="group" aria-label="Status">
+      <button data-status="all" aria-pressed="true">All</button>
+      <button data-status="failed" aria-pressed="false">Failed</button>
+      <button data-status="passed" aria-pressed="false">Passed</button>
+    </div>
+    <label class="sr" for="groupby">Group by</label>
+    <select id="groupby" class="btn" aria-label="Group by">
+      <option value="feature">Group: feature</option><option value="routine">Group: routine</option>
+      <option value="tag">Group: tag</option><option value="status">Group: status</option>
+    </select>
+    <button class="btn" id="expand">Expand all</button>
+    <button class="btn" id="collapse">Collapse all</button>
+  </div>
+  <div class="tagbar" id="tagbar" aria-label="Tags"></div>
+
+  <main id="features"></main>
+  </section>
+
+  <section class="grid two" style="margin-top:16px" data-section="tables" data-required>
+    <div class="card"><h2>Tags</h2><div id="tags-table"></div></div>
+    <div class="card"><h2>Routines used</h2><div id="routines-table"></div></div>
+  </section>
+
+  <footer id="footer"></footer>
+</div>
+
+<dialog id="lightbox" aria-label="Screenshot"><img alt="" /><p></p>
+  <div class="lb-bar"><button data-lb="prev" aria-label="Previous step">← Prev</button><span id="lb-pos"></span><button data-lb="next" aria-label="Next step">Next →</button><button data-lb="video">▶ This step's video</button><button data-lb="close">Close</button></div>
+</dialog>
+
+<script>
+const DATA = /*__REPORT_DATA__*/null;
+(function () {
+  "use strict";
+  if (!DATA) { document.getElementById("features").innerHTML = '<p class="empty">No data: this is the raw template.</p>'; return; }
+  const $ = (s, el = document) => el.querySelector(s);
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const ms = (n) => (n >= 60000 ? `${Math.floor(n / 60000)}m ${Math.round((n % 60000) / 1000)}s` : n >= 1000 ? `${(n / 1000).toFixed(1)}s` : `${Math.round(n)}ms`);
+  const T = DATA.totals;
+  const ICON = { passed: "✓", failed: "✕", skipped: "–" };
+  const KW = { context: "Given", action: "When", outcome: "Then", unknown: "Step" };
+
+  document.title = `${DATA.title} — ${T.passed}/${T.scenarios} passed`;
+  $("#title").textContent = DATA.title;
+  const started = new Date(DATA.startedAt);
+  $("#meta").innerHTML = [
+    ["Started", started.toLocaleString()],
+    ["Duration", ms(DATA.durationMs)],
+    ["Driver", `${DATA.run.driver} · ${DATA.run.platform}`],
+    ["Planner", DATA.run.model ? `${DATA.run.model}${DATA.run.mode === "no-cache" ? " · every step planned (no cache)" : ""}` : "replay (no model)"],
+    DATA.run.tags ? ["Tags", DATA.run.tags] : null,
+  ].filter(Boolean).map(([k, v]) => `<span class="chip">${esc(k)} <b>${esc(v)}</b></span>`).join("");
+  const v = $("#verdict");
+  v.textContent = T.failed ? `${T.failed} FAILED` : "ALL PASSED";
+  v.className = `verdict ${T.failed ? "fail" : "pass"}`;
+
+  // KPIs
+  const C = 2 * Math.PI * 34, passLen = T.scenarios ? (C * T.passed) / T.scenarios : 0;
+  const stepBar = (n) => (T.steps ? (100 * n) / T.steps : 0);
+  $("#kpis").innerHTML = `
+    <div class="card donut-card">
+      <svg width="88" height="88" viewBox="0 0 88 88" role="img" aria-label="${T.passRate}% of scenarios passed">
+        <circle cx="44" cy="44" r="34" fill="none" stroke="var(--fail-bg)" stroke-width="10"/>
+        <circle cx="44" cy="44" r="34" fill="none" stroke="var(--pass)" stroke-width="10" stroke-linecap="round"
+          stroke-dasharray="${passLen} ${C}" transform="rotate(-90 44 44)"/>
+        <text x="44" y="49" text-anchor="middle" font-size="18" font-weight="700" fill="currentColor">${T.passRate}%</text>
+      </svg>
+      <div class="kpi"><div class="label">Scenarios</div><div class="value">${T.passed}<span style="color:var(--muted);font-size:18px">/${T.scenarios}</span></div>
+        <div class="sub">${T.failed ? `<span style="color:var(--fail)">${T.failed} failed</span>` : "none failed"} · ${T.features} feature${T.features === 1 ? "" : "s"}</div></div>
+    </div>
+    <div class="card kpi"><div class="label">Steps</div><div class="value">${T.steps}</div>
+      <div class="bar" style="margin:8px 0 6px" aria-hidden="true"><span style="width:${stepBar(T.stepsPassed)}%;background:var(--pass)"></span><span style="width:${stepBar(T.stepsFailed)}%;background:var(--fail)"></span><span style="width:${stepBar(T.stepsSkipped)}%;background:var(--skip)"></span></div>
+      <div class="sub">${T.stepsPassed} passed · ${T.stepsFailed} failed · ${T.stepsSkipped} skipped</div></div>
+    <div class="card kpi"><div class="label">Plans</div><div class="value">${T.fromCache}<span style="color:var(--muted);font-size:16px"> cached</span></div>
+      <div class="sub">${T.fromModel} planned by ${esc(DATA.run.model || "—")}${DATA.llm ? ` · ${ms(DATA.llm.ms)} model time` : ""}</div></div>
+    <div class="card kpi"><div class="label">Guards &amp; heals</div><div class="value">${T.guardFixes + T.heals}</div>
+      <div class="sub">${T.guardFixes} plan repairs · ${T.heals} healed targets</div></div>
+    <div class="card kpi"><div class="label">Duration</div><div class="value">${ms(DATA.durationMs)}</div>
+      <div class="sub">${T.screenshots} screenshot${T.screenshots === 1 ? "" : "s"} · ${T.videos || 0} video${T.videos === 1 ? "" : "s"}</div></div>`;
+
+  // AI summary
+  const sum = DATA.ai.sections.summary;
+  const sumEl = document.querySelector('[data-ai="summary"]');
+  if (sum) {
+    sumEl.textContent = sum.text;
+    $("#ai-badge").textContent = sum.accepted ? `Written by ${sum.model} · checked against data` : "Generated from data";
+    $("#ai-note").textContent = sum.accepted ? "" : sum.reason || "";
+  }
+
+  // Failures
+  if (DATA.failures.length) {
+    $("#failures").hidden = false;
+    $("#failure-list").innerHTML = DATA.failures.map((f) => {
+      const note = DATA.ai.failures[f.id];
+      const loc = `${f.file}:${f.stepLine ?? f.scenarioLine ?? ""}`;
+      return `<div class="fcard">
+        <div>
+          <div><span class="dot failed"></span> <a href="#${esc(f.id)}" data-open="${esc(f.id)}"><b>${esc(f.scenario)}</b></a> <span class="path">${esc(loc)}</span></div>
+          <div class="stext" style="margin-top:4px">${esc(f.step)}</div>
+          ${f.routine ? `<div class="origin">from routine <span class="r">${esc(f.routine)}</span></div>` : ""}
+          <pre class="err">${esc(f.error)}</pre>
+          ${note && note.accepted ? `<p style="margin:8px 0 0"><span class="ai-badge">${esc(note.model)}</span> ${esc(note.text)}</p>` : ""}
+        </div>
+        <div class="media" style="width:140px">
+          ${f.screenshot ? `<img class="thumb" src="${esc(f.screenshot)}" alt="Screen when it failed" data-caption="${esc(f.scenario)} — ${esc(f.step)}"/>` : ""}
+          ${f.video ? `<button class="seek" data-open="${esc(f.id)}" data-seek="${esc(f.id)}" data-at="${(f.at || 0).toFixed(2)}">▶ watch from the failing step</button>` : ""}
+        </div>
+      </div>`;
+    }).join("");
+  }
+
+  // Tag bar
+  const active = new Set();
+  $("#tagbar").innerHTML = DATA.tags.map((t) => `<button class="tag" aria-pressed="false" data-tag="${esc(t.tag)}">${esc(t.tag)}<span class="n">${t.passed + t.failed}</span></button>`).join("");
+
+  // Features
+  let scIndex = 0;
+  const actionLabel = (a) => {
+    const what = a.kind === "call" ? a.fn : a.kind === "open" ? a.route : a.target || "";
+    const val = a.kind === "call" ? JSON.stringify(a.args || {}) : a.value != null ? `"${a.value}"` : a.count != null ? `= ${a.count}` : "";
+    return `<li><b>${esc(a.kind)}</b> ${esc(what)} ${esc(val)}</li>`;
+  };
+  const MEDIA = () => (DATA.ai.view && DATA.ai.view.media) || "timeline";
+  const stepThumb = (s) => {
+    // Always present (the team's rule): every step's screen, collapsed below the step.
+    if (!s.screenshot && !(s._video && s.at != null)) return "";
+    // Collapsed below the step: open it to see the screen right after this step ran.
+    const clip = s._video && s.at != null && s.atEnd != null
+      ? `<figure class="clip"><video controls preload="none" playsinline src="${esc(s._video)}#t=${Math.max(0, s.at - 0.2).toFixed(2)},${(s.atEnd + 0.3).toFixed(2)}" aria-label="This step in the recording"></video><figcaption>Only this step · ${fmt(s.at)}–${fmt(s.atEnd)}</figcaption></figure>`
+      : "";
+    return `<details class="shot ${s.status}"><summary>${s.status === "failed" ? "Screen when this step failed" : "Screen after this step"}${clip ? " · clip" : ""}</summary><div class="shot-media"><img src="${esc(s.screenshot)}" alt="Screen after: ${esc(s.step)}" loading="lazy" data-gallery="${esc(s._sid)}" data-i="${s._i}"/>${clip}</div></details>`;
+  };
+  const fmt = (t) => `${Math.floor(t / 60)}:${(t % 60).toFixed(1).padStart(4, "0")}`;
+  const seekBtn = (s) => (s.at != null && s._hasVideo ? `<button class="seek" data-seek="${esc(s._sid)}" data-at="${s.at.toFixed(2)}" ${s.atEnd != null ? `data-end="${(s.atEnd + 0.3).toFixed(2)}"` : ""} title="Play only this step in the scenario video">▶ step ${fmt(s.at)}</button>` : "");
+  const stepHtml = (s) => `
+    <li class="st ${s.status}">
+      <span class="dot ${s.status}" aria-hidden="true"></span>
+      <div class="line1">
+        <span class="kw ${s.background ? "background" : esc(s.keyword)}">${s.background ? "Background" : KW[s.keyword] || "Step"}</span>
+        <span class="stext">${esc(s.step)}</span>
+        ${s.source !== "none" ? `<span class="badge ${s.source}">${s.source === "llm" ? `planned ${ms(s.planMs)}` : "cached plan"}</span>` : ""}
+        ${s.status !== "skipped" ? `<span class="badge">${ms(s.ms)}</span>` : `<span class="badge">skipped</span>`}
+        ${s.line ? `<span class="path">:${s.line}</span>` : ""}
+        ${seekBtn(s)}
+      </div>
+      ${s.actions.length ? `<ul class="acts">${s.actions.map(actionLabel).join("")}</ul>` : ""}
+      ${s.guardFixes.map((g) => `<div class="fix">guard: ${esc(g)}</div>`).join(" ")}
+      ${s.healed.map((h) => `<div class="fix">healed: ${esc(h)}</div>`).join(" ")}
+      ${(s.globals || []).map((g) => `<div class="fix global">@global ${esc(g.rule)} → ${esc(g.actions.map((x) => x.kind + "(" + (x.target || "") + ")").join(" → "))}${g.error ? " — " + esc(g.error) : ""} <span class="muted">${esc(g.at)}</span></div>`).join(" ")}
+      ${s.error ? `<pre class="err">${esc(s.error)}</pre>` : ""}
+      ${stepThumb(s)}
+    </li>`;
+  // Consecutive steps from the same top-level routine call are grouped under it.
+  // Background steps first, as one labelled block; then the scenario's own steps.
+  const stepsHtml = (steps) => {
+    const bg = steps.filter((s) => s.background), own = steps.filter((s) => !s.background);
+    if (!bg.length) return groupHtml(own);
+    const st = bg.some((g) => g.status === "failed") ? "failed" : bg.every((g) => g.status === "skipped") ? "skipped" : "passed";
+    return `<li class="st ${st}" style="padding-left:0"><div class="bg-title">BACKGROUND</div><ol class="timeline bg-block">${groupHtml(bg)}</ol></li>${groupHtml(own)}`;
+  };
+  const groupHtml = (steps) => {
+    let out = "", i = 0;
+    while (i < steps.length) {
+      const o = steps[i].origin && steps[i].origin[0];
+      if (!o) { out += stepHtml(steps[i++]); continue; }
+      const key = `${o.call}|${steps[i].line}`;
+      const group = [];
+      while (i < steps.length && steps[i].origin && `${steps[i].origin[0].call}|${steps[i].line}` === key) group.push(steps[i++]);
+      const st = group.some((g) => g.status === "failed") ? "failed" : group.every((g) => g.status === "skipped") ? "skipped" : "passed";
+      out += `<li class="st ${st}" style="padding-left:0">
+        <div class="routine-title">@routine ${esc(o.call)} <span class="path">→ ${esc(o.file)}${o.via === "model" ? " · matched by model" : ""}</span></div>
+        <ol class="timeline routine-group">${group.map((g) => {
+          const chain = g.origin.slice(1).map((x) => `${x.file.split("/").pop()}:${x.line}`).join(" › ");
+          return stepHtml(g).replace("</div>", `</div>${chain ? `<div class="origin">via <span class="r">${esc(chain)}</span></div>` : `<div class="origin"><span class="r">${esc(g.origin[0].file.split("/").pop())}:${g.origin[0].line}</span></div>`}`);
+        }).join("")}</ol></li>`;
+    }
+    return out;
+  };
+  // View plan (the pocket model's layout for this template; defaults when absent).
+  const VIEW = DATA.ai.view || { groupBy: "feature", sortBy: "failed-first", expand: "failed", sections: [], highlight: [], headline: "" };
+  if (VIEW.headline) $("#headline").textContent = VIEW.headline;
+  const order = VIEW.sections && VIEW.sections.length ? VIEW.sections : null;
+  if (order) {
+    const host = $("#sections"), footer = $("#footer");
+    const all = [...document.querySelectorAll("[data-section]")];
+    all.forEach((el) => { if (!order.includes(el.dataset.section) && !el.hasAttribute("data-required")) el.remove(); });
+    order.forEach((name) => { const el = document.querySelector(`[data-section="${name}"]`); if (el) host.insertBefore(el, footer); });
+  }
+  const scenarios = DATA.features.flatMap((f) => f.scenarios.map((s) => ({ ...s, featureName: f.name, featureTags: f.tags })));
+  const sorters = {
+    "failed-first": (a, b) => (a.status === b.status ? 0 : a.status === "failed" ? -1 : 1) || a.file.localeCompare(b.file) || (a.line || 0) - (b.line || 0),
+    file: (a, b) => a.file.localeCompare(b.file) || (a.line || 0) - (b.line || 0),
+    name: (a, b) => a.name.localeCompare(b.name),
+    slowest: (a, b) => b.ms - a.ms,
+  };
+  const groupsBy = (key) => {
+    const map = new Map();
+    const add = (k, meta, s) => { if (!map.has(k)) map.set(k, { ...meta, items: [] }); map.get(k).items.push(s); };
+    for (const s of scenarios) {
+      if (key === "feature") add(s.file, { title: s.featureName, sub: s.file, tags: s.featureTags }, s);
+      else if (key === "status") add(s.status, { title: s.status === "failed" ? "Failed" : "Passed", sub: "", tags: [] }, s);
+      else if (key === "tag") (s.tags.length ? s.tags : ["(no tag)"]).forEach((t) => add(t, { title: t, sub: "tag", tags: [] }, s));
+      else {
+        const files = [...new Set(s.steps.flatMap((st) => (st.origin || []).map((o) => o.file)))];
+        (files.length ? files : ["(no routine)"]).forEach((f) => add(f, { title: f.split("/").pop(), sub: f === "(no routine)" ? "" : f, tags: [] }, s));
+      }
+    }
+    return [...map.values()].sort((a, b) => b.items.filter((x) => x.status === "failed").length - a.items.filter((x) => x.status === "failed").length);
+  };
+  const scenarioHtml = (s, seen) => {
+    const first = !seen.has(s.id); seen.add(s.id);
+    s.steps.forEach((st, i) => { st._sid = s.id; st._i = i; st._hasVideo = !!s.video; st._video = s.video; });
+    const shots = s.steps.map((st, i) => ({ st, i })).filter((x) => x.st.screenshot);
+    const strip = MEDIA() === "filmstrip" && shots.length ? `<div class="strip" aria-label="Screens, step by step">${shots.map(({ st, i }) =>
+      `<figure class="${st.status}"><img src="${esc(st.screenshot)}" alt="Screen after: ${esc(st.step)}" loading="lazy" data-gallery="${esc(s.id)}" data-i="${i}"/><figcaption>${i + 1}</figcaption></figure>`).join("")}</div>` : "";
+    const video = s.video ? `<video controls preload="metadata" playsinline data-video="${esc(s.id)}" src="${esc(s.video)}"></video><button class="seek" data-full="${esc(s.id)}">▶ Full video</button>` : "";
+    const lastShot = s.screenshot ? `<img class="thumb" src="${esc(s.screenshot)}" alt="${s.status === "failed" ? "Screen when it failed" : "Final screen"}" data-gallery="${esc(s.id)}" data-i="${Math.max(0, s.steps.findIndex((x) => x.screenshot === s.screenshot))}" loading="lazy"/>` : "";
+    const hay = [s.featureName, s.file, s.name, ...s.tags, ...s.steps.map((x) => x.step + " " + (x.error || ""))].join(" ").toLowerCase();
+    const open = VIEW.expand === "all" || (VIEW.expand === "failed" && s.status === "failed");
+    const hl = (VIEW.highlight || []).includes(s.id);
+    return `<details class="sc${hl ? " hl" : ""}" ${first ? `id="${esc(s.id)}"` : ""} data-sid="${esc(s.id)}" data-status="${s.status}" data-tags="${esc(s.tags.join(" "))}" data-hay="${esc(hay)}" ${open ? "open" : ""}>
+      <summary>
+        <span class="dot ${s.status}" aria-label="${s.status}"></span>
+        <span><span class="sname">${esc(s.name)}</span>${s.rule ? `<span class="group"> · ${esc(s.rule)}</span>` : ""}${hl ? ' <span class="badge hlb">highlighted</span>' : ""}
+          <span class="meta" style="display:inline-flex;margin-left:6px">${s.tags.filter((t) => !s.featureTags.includes(t)).map((t) => `<span class="tag static">${esc(t)}</span>`).join("")}</span>
+          <div class="path">${esc(s.file)}:${s.line ?? ""}</div></span>
+        <span class="right">${ms(s.ms)} <span class="chev" aria-hidden="true">▸</span></span>
+      </summary>
+      ${strip}
+      <div class="steps">
+        <ol class="timeline">${stepsHtml(s.steps)}</ol>
+        <div class="media">${video || lastShot}${video && lastShot ? `<div class="path">${s.status === "failed" ? "screen when it failed" : "final screen"}</div>${lastShot}` : ""}</div>
+      </div>
+    </details>`;
+  };
+  const renderGroups = (key) => {
+    const seen = new Set();
+    $("#features").innerHTML = groupsBy(key).map((g) => {
+      const items = [...g.items].sort(sorters[VIEW.sortBy] || sorters["failed-first"]);
+      const failed = items.filter((x) => x.status === "failed").length, passed = items.length - failed;
+      return `<article class="card feature" data-feature>
+        <div class="fhead">
+          <span class="dot ${failed ? "failed" : "passed"}" aria-hidden="true"></span>
+          <div><div class="fname">${esc(g.title)}</div>${g.sub ? `<div class="path">${esc(g.sub)}</div>` : ""}
+            <div class="meta" style="margin-top:6px">${g.tags.map((t) => `<span class="tag static">${esc(t)}</span>`).join("")}</div></div>
+          <div style="min-width:140px">
+            <div class="right" style="justify-content:flex-end;margin-bottom:6px">${passed}/${items.length} passed · ${ms(items.reduce((n, x) => n + x.ms, 0))}</div>
+            <div class="bar" aria-hidden="true"><span style="width:${(100 * passed) / items.length}%;background:var(--pass)"></span><span style="width:${(100 * failed) / items.length}%;background:var(--fail)"></span></div>
+          </div>
+        </div>
+        ${items.map((s) => scenarioHtml(s, seen)).join("")}
+      </article>`;
+    }).join("") || '<p class="empty">No scenarios ran.</p>';
+  };
+  const groupSelect = $("#groupby");
+  groupSelect.value = VIEW.groupBy || "feature";
+  renderGroups(groupSelect.value);
+  groupSelect.addEventListener("change", () => { renderGroups(groupSelect.value); apply(); });
+
+  // Tables
+  $("#tags-table").innerHTML = DATA.tags.length ? `<table><thead><tr><th>Tag</th><th class="num">Passed</th><th class="num">Failed</th></tr></thead><tbody>${
+    DATA.tags.map((t) => `<tr><td><span class="tag static">${esc(t.tag)}</span></td><td class="num">${t.passed}</td><td class="num" style="color:${t.failed ? "var(--fail)" : "inherit"}">${t.failed}</td></tr>`).join("")}</tbody></table>` : '<p class="empty">No tags.</p>';
+  $("#routines-table").innerHTML = DATA.routines.length ? `<table><thead><tr><th>Routine</th><th class="num">Scenarios</th><th class="num">Steps</th></tr></thead><tbody>${
+    DATA.routines.map((r) => `<tr><td><div style="font-family:var(--mono);font-size:13px">${esc(r.routine)}</div><div class="path">${esc(r.file)}</div></td><td class="num">${r.scenarios}</td><td class="num">${r.steps}</td></tr>`).join("")}</tbody></table>` : '<p class="empty">No routines were used.</p>';
+  const viewNote = DATA.ai.view ? (DATA.ai.view.accepted ? `layout chosen by ${esc(DATA.ai.view.model)} from the template brief` : `default layout${DATA.ai.view.reason ? ` (${esc(DATA.ai.view.reason)})` : ""}`) : "default layout";
+  $("#footer").innerHTML = `Generated ${esc(new Date(DATA.generatedAt).toLocaleString())} by @pn/e2e-ai · template <b>${esc(DATA.ai.template || "?")}</b> · ${viewNote}${DATA.ai.view && DATA.ai.view.reason && DATA.ai.view.accepted ? ` · ${esc(DATA.ai.view.reason)}` : ""} · <code>${esc(DATA.run.command)}</code> · <a href="report.json">report.json</a>`;
+
+  // Filtering
+  let status = "all";
+  const apply = () => {
+    const q = $("#q").value.trim().toLowerCase();
+    document.querySelectorAll("details.sc").forEach((d) => {
+      const tags = d.dataset.tags.split(" ");
+      const ok = (status === "all" || d.dataset.status === status) && (!q || d.dataset.hay.includes(q)) && [...active].every((t) => tags.includes(t));
+      d.hidden = !ok;
+    });
+    document.querySelectorAll("[data-feature]").forEach((a) => { a.hidden = ![...a.querySelectorAll("details.sc")].some((d) => !d.hidden); });
+  };
+  $("#q").addEventListener("input", apply);
+  document.querySelectorAll(".seg button").forEach((b) => b.addEventListener("click", () => {
+    status = b.dataset.status;
+    document.querySelectorAll(".seg button").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+    apply();
+  }));
+  $("#tagbar").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-tag]"); if (!b) return;
+    const t = b.dataset.tag; active.has(t) ? active.delete(t) : active.add(t);
+    b.setAttribute("aria-pressed", String(active.has(t))); apply();
+  });
+  $("#expand").addEventListener("click", () => document.querySelectorAll("details.sc:not([hidden])").forEach((d) => (d.open = true)));
+  $("#collapse").addEventListener("click", () => document.querySelectorAll("details.sc").forEach((d) => (d.open = false)));
+  document.addEventListener("click", (e) => {
+    const link = e.target.closest("[data-open]");
+    if (link) { const d = document.getElementById(link.dataset.open); if (d) { d.hidden = false; d.open = true; } }
+    const full = e.target.closest("[data-full]");
+    if (full) {
+      const v = document.querySelector(`video[data-video="${full.dataset.full}"]`);
+      if (v) { delete v.dataset.stopAt; v.currentTime = 0; v.play().catch(() => undefined); }
+      return;
+    }
+    const seek = e.target.closest("[data-seek]");
+    if (seek) {
+      const d = document.getElementById(seek.dataset.seek); if (d) { d.hidden = false; d.open = true; d.scrollIntoView({ block: "start", behavior: "smooth" }); }
+      const v = document.querySelector(`video[data-video="${seek.dataset.seek}"]`);
+      if (v) {
+        // Only the step's slice: the player pauses itself when the step ends.
+        if (seek.dataset.end) v.dataset.stopAt = seek.dataset.end; else delete v.dataset.stopAt;
+        v.currentTime = Number(seek.dataset.at); v.play().catch(() => undefined);
+      }
+      return;
+    }
+    const img = e.target.closest("img[data-gallery], img.thumb");
+    if (img && !e.target.closest("#lightbox")) openLightbox(img);
+  });
+  // Lightbox: step-by-step through one scenario's screens (←/→, Esc), with "play video from here".
+  const findScenario = (id) => scenarios.find((x) => x.id === id);
+  let lb = { sid: null, i: 0, single: null };
+  const showLb = () => {
+    const dlg = $("#lightbox");
+    if (lb.single) { $("img", dlg).src = lb.single.src; $("p", dlg).textContent = lb.single.dataset.caption || lb.single.alt; $("#lb-pos").textContent = ""; return; }
+    const sc = findScenario(lb.sid); const shots = sc.steps.map((st, i) => ({ st, i })).filter((x) => x.st.screenshot);
+    let k = shots.findIndex((x) => x.i === lb.i); if (k < 0) k = 0;
+    const cur = shots[k]; lb.i = cur.i;
+    $("img", dlg).src = cur.st.screenshot; $("img", dlg).alt = cur.st.step;
+    $("p", dlg).textContent = `${sc.name} — step ${cur.i + 1}: ${cur.st.step} (${cur.st.status})${cur.st.error ? " — " + cur.st.error : ""}`;
+    $("#lb-pos").textContent = `${k + 1} / ${shots.length}`;
+    dlg.querySelector('[data-lb="video"]').hidden = !(sc.video && cur.st.at != null);
+  };
+  const openLightbox = (img) => {
+    lb = img.dataset.gallery ? { sid: img.dataset.gallery, i: Number(img.dataset.i || 0), single: null } : { sid: null, i: 0, single: img };
+    showLb(); $("#lightbox").showModal();
+  };
+  const stepLb = (d) => {
+    if (lb.single) return;
+    const sc = findScenario(lb.sid); const idx = sc.steps.map((st, i) => (st.screenshot ? i : -1)).filter((i) => i >= 0);
+    const k = idx.indexOf(lb.i); lb.i = idx[Math.min(idx.length - 1, Math.max(0, k + d))]; showLb();
+  };
+  $("#lightbox").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-lb]");
+    if (!b) { if (e.target === $("#lightbox")) $("#lightbox").close(); return; }
+    const a = b.dataset.lb;
+    if (a === "prev") stepLb(-1); else if (a === "next") stepLb(1); else if (a === "close") $("#lightbox").close();
+    else if (a === "video") {
+      const st = findScenario(lb.sid).steps[lb.i]; $("#lightbox").close();
+      const d = document.getElementById(lb.sid); if (d) { d.hidden = false; d.open = true; d.scrollIntoView({ block: "start" }); }
+      const v = document.querySelector(`video[data-video="${lb.sid}"]`);
+      if (v) { if (st.atEnd != null) v.dataset.stopAt = String(st.atEnd + 0.3); v.currentTime = st.at; v.play().catch(() => undefined); }
+    }
+  });
+  // Segment playback: a player with data-stop-at pauses there (set by a step's ▶ button).
+  document.addEventListener("timeupdate", (e) => {
+    const v = e.target;
+    if (v.tagName === "VIDEO" && v.dataset.stopAt && v.currentTime >= Number(v.dataset.stopAt)) { v.pause(); delete v.dataset.stopAt; }
+  }, true);
+  document.addEventListener("keydown", (e) => {
+    if (!$("#lightbox").open) return;
+    if (e.key === "ArrowRight") stepLb(1); else if (e.key === "ArrowLeft") stepLb(-1);
+  });
+  if (location.hash) { const d = document.getElementById(location.hash.slice(1)); if (d && d.tagName === "DETAILS") d.open = true; }
+})();
+</script>
+</body>
+</html>

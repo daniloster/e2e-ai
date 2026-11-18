@@ -1,0 +1,4 @@
+<resources>
+    <!-- The debug build is its own app (com.pocketnotes.dev) beside the release; shorten the name if the launcher truncates it. -->
+    <string name="app_name">Pocket Notes Dev</string>
+</resources>

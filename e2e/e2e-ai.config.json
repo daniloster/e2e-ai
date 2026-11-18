@@ -1,0 +1,175 @@
+{
+  "model": {
+    "provider": "openai",
+    "endpoint": "${E2E_MODEL_ENDPOINT:-http://127.0.0.1:11434/v1}",
+    "name": "${E2E_MODEL:-qwen3:4b}"
+  },
+  "docs": {
+    "api": [
+      "docs/notes-api.md"
+    ],
+    "guide": "docs/app-guide.md"
+  },
+  "api": {
+    "baseUrl": "${PN_API_URL:-http://127.0.0.1:4010}"
+  },
+  "features": "features",
+  "routines": "routines",
+  "plans": ".plans/plans.json",
+  "reports": {
+    "templates": "reports/templates",
+    "runs": "reports/runs",
+    "defaultTemplate": "engineering"
+  },
+  "targets": {
+    "web": {
+      "platform": "web",
+      "description": "Web app via our MCP server (Playwright inside)",
+      "driver": {
+        "type": "mcp",
+        "command": "node",
+        "args": [
+          "packages/e2e-ai/src/mcp/web-mcp.ts",
+          "--base-url",
+          "${PN_WEB_URL:-http://localhost:5180}",
+          "--start",
+          "/app.html"
+        ],
+        "cwd": ".."
+      }
+    },
+    "web-playwright-mcp": {
+      "platform": "web",
+      "description": "Web app via Microsoft's @playwright/mcp server (Chrome)",
+      "driver": {
+        "type": "playwright-mcp",
+        "baseUrl": "${PN_WEB_URL:-http://localhost:5180}",
+        "startPath": "/app.html",
+        "command": "npx",
+        "args": [
+          "@playwright/mcp",
+          "--browser",
+          "chrome",
+          "--headless",
+          "--isolated"
+        ],
+        "cwd": ".."
+      }
+    },
+    "ios": {
+      "platform": "mobile",
+      "os": "ios",
+      "description": "iOS simulator, Debug build, in-app RN bridge (gray-box)",
+      "driver": {
+        "type": "mcp",
+        "command": "node",
+        "args": [
+          "packages/e2e-ai/src/mcp/rn-mcp.ts",
+          "--launch",
+          "xcrun simctl launch ${PN_SIM:-booted} com.pocketnotes.dev",
+          "--sim",
+          "${PN_SIM:-booted}"
+        ],
+        "cwd": ".."
+      }
+    },
+    "android": {
+      "platform": "mobile",
+      "os": "android",
+      "description": "Android emulator/device, Debug build, in-app RN bridge (run adb reverse for 4010, 4011, 8093 first)",
+      "driver": {
+        "type": "mcp",
+        "command": "node",
+        "args": [
+          "packages/e2e-ai/src/mcp/rn-mcp.ts",
+          "--launch",
+          "adb shell monkey -p com.pocketnotes.dev 1",
+          "--android",
+          "${ANDROID_SERIAL:-true}"
+        ],
+        "cwd": ".."
+      }
+    },
+    "ios-appium": {
+      "platform": "mobile",
+      "os": "ios",
+      "description": "iOS simulator via Appium (XCUITest), black-box",
+      "driver": {
+        "type": "appium",
+        "url": "${APPIUM_URL:-http://127.0.0.1:4723}",
+        "appId": "com.pocketnotes.dev",
+        "scheme": "pocketnotes",
+        "resetLink": "e2e-reset",
+        "capabilities": {
+          "platformName": "iOS",
+          "appium:automationName": "XCUITest",
+          "appium:udid": "${PN_SIM:-booted}",
+          "appium:bundleId": "com.pocketnotes.dev",
+          "appium:noReset": true,
+          "appium:autoDismissAlerts": true
+        }
+      }
+    },
+    "android-appium": {
+      "platform": "mobile",
+      "os": "android",
+      "description": "Android via Appium (UiAutomator2), black-box",
+      "driver": {
+        "type": "appium",
+        "url": "${APPIUM_URL:-http://127.0.0.1:4723}",
+        "appId": "com.pocketnotes.dev",
+        "scheme": "pocketnotes",
+        "resetLink": "e2e-reset",
+        "capabilities": {
+          "platformName": "Android",
+          "appium:automationName": "UiAutomator2",
+          "appium:appPackage": "com.pocketnotes.dev",
+          "appium:appActivity": "com.pocketnotes.MainActivity",
+          "appium:noReset": true
+        }
+      }
+    },
+    "ios-maestro": {
+      "platform": "mobile",
+      "os": "ios",
+      "description": "iOS simulator via Maestro CLI, black-box",
+      "driver": {
+        "type": "maestro",
+        "device": "${PN_SIM:-}",
+        "appId": "com.pocketnotes.dev",
+        "scheme": "pocketnotes",
+        "resetLink": "e2e-reset"
+      }
+    },
+    "android-maestro": {
+      "platform": "mobile",
+      "os": "android",
+      "description": "Android via Maestro CLI, black-box",
+      "driver": {
+        "type": "maestro",
+        "device": "${ANDROID_SERIAL:-}",
+        "appId": "com.pocketnotes.dev",
+        "scheme": "pocketnotes",
+        "resetLink": "e2e-reset"
+      }
+    }
+  },
+  "media": {
+    "screenshots": "steps",
+    "video": "all",
+    "stepPauseMs": 600
+  },
+  "benchmark": {
+    "description": "The three models that passed 11/11 with every step planned (2026-11-18). GGUF tags: Ollama's MLX builds cannot do JSON-schema output.",
+    "models": [
+      "\"qwen3:4b\"@${E2E_MODEL_ENDPOINT:-http://127.0.0.1:11434/v1}",
+      "\"qwen3.5:4b-q4_K_M\"@${E2E_MODEL_ENDPOINT:-http://127.0.0.1:11434/v1}",
+      "\"qwen3-vl:4b-instruct-q4_K_M\"@${E2E_MODEL_ENDPOINT:-http://127.0.0.1:11434/v1}"
+    ],
+    "modes": [
+      "no-cache",
+      "cache",
+      "one-fresh"
+    ]
+  }
+}

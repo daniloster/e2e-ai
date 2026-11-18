@@ -1,0 +1,4 @@
+Routine: create user "${email}" with password "${password}" and notes: ${table:notes[title, description]}
+
+@routine create user with login "${email}" and password "${password}"
+@routine user "${email}" has notes: ${table:notes[title, description]}

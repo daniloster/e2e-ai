@@ -1,0 +1,123 @@
+{
+  "name": "e2e-ai-vscode",
+  "displayName": "E2E AI — Features & Routines",
+  "description": "Colours Gherkin .feature files (with #tags and @routine calls) and .routine files, and completes, checks and navigates routines across the workspace.",
+  "version": "0.1.0",
+  "publisher": "pocketnotes",
+  "private": true,
+  "license": "UNLICENSED",
+  "engines": {
+    "vscode": "^1.100.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Testing",
+    "Snippets"
+  ],
+  "main": "./dist/extension.js",
+  "activationEvents": [
+    "workspaceContains:**/*.routine",
+    "workspaceContains:**/*.feature"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "e2e-feature",
+        "aliases": [
+          "E2E Feature (Gherkin)",
+          "feature"
+        ],
+        "extensions": [
+          ".feature"
+        ],
+        "configuration": "./language-configuration.json"
+      },
+      {
+        "id": "e2e-routine",
+        "aliases": [
+          "E2E Routine",
+          "routine"
+        ],
+        "extensions": [
+          ".routine"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "e2e-feature",
+        "scopeName": "source.e2e-feature",
+        "path": "./syntaxes/e2e-feature.tmLanguage.json"
+      },
+      {
+        "language": "e2e-routine",
+        "scopeName": "source.e2e-routine",
+        "path": "./syntaxes/e2e-routine.tmLanguage.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "e2e-feature",
+        "path": "./snippets/feature.code-snippets"
+      },
+      {
+        "language": "e2e-routine",
+        "path": "./snippets/routine.code-snippets"
+      }
+    ],
+    "commands": [
+      {
+        "command": "e2eAi.openLatestReport",
+        "title": "E2E AI: Open latest run report"
+      },
+      {
+        "command": "e2eAi.reindex",
+        "title": "E2E AI: Re-index routines and tags"
+      }
+    ],
+    "configuration": {
+      "title": "E2E AI",
+      "properties": {
+        "e2eAi.routinesGlob": {
+          "type": "string",
+          "default": "**/*.routine",
+          "description": "Where routine files live."
+        },
+        "e2eAi.reportsGlob": {
+          "type": "string",
+          "default": "**/e2e/reports/*/index.html",
+          "description": "Where run reports are written."
+        }
+      }
+    },
+    "configurationDefaults": {
+      "[e2e-feature]": {
+        "editor.quickSuggestions": {
+          "other": true,
+          "comments": false,
+          "strings": false
+        },
+        "editor.wordBasedSuggestions": "off"
+      },
+      "[e2e-routine]": {
+        "editor.quickSuggestions": {
+          "other": true,
+          "comments": false,
+          "strings": false
+        },
+        "editor.wordBasedSuggestions": "off"
+      }
+    }
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "package": "node scripts/build.mjs --vsix",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@types/vscode": "1.100.0",
+    "vscode-oniguruma": "2.0.1",
+    "vscode-textmate": "9.3.2"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["REPLACE_ME_TEAM_ID.com.pocketnotes", "REPLACE_ME_TEAM_ID.com.pocketnotes.dev"],
+        "components": [
+          { "/": "/s", "comment": "Shared link landing: pocketnotes.app/s#<payload>" },
+          { "/": "/s/*", "comment": "Reserved for future share paths" }
+        ]
+      }
+    ]
+  },
+  "webcredentials": { "apps": ["REPLACE_ME_TEAM_ID.com.pocketnotes"] }
+}

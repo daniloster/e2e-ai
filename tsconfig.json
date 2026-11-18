@@ -1,0 +1,15 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": { "noEmit": true, "skipLibCheck": true, "types": ["node"] },
+  "include": ["*.ts"],
+  "references": [
+    { "path": "apps-modules/core" },
+    { "path": "apps-modules/i18n" },
+    { "path": "apps-modules/design-tokens" },
+    { "path": "apps-modules/fixture-api" },
+    { "path": "packages/e2e-ai" },
+    { "path": "packages/e2e-ai-cli" },
+    { "path": "apps/web" },
+    { "path": "tools/brand" }
+  ]
+}

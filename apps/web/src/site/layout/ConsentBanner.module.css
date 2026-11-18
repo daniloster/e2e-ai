@@ -1,0 +1,56 @@
+/* The site consent banner: fixed to the bottom, token colours only. Accept and
+   decline share one size; only colour marks the primary action. [hidden] always wins. */
+.banner {
+  position: fixed;
+  inset-inline: 0;
+  bottom: 0;
+  z-index: 9; /* below the skip link (10) and the ViewportDebug badge (11) */
+  display: flex;
+  flex-direction: column;
+  gap: var(--site-space-2);
+  width: 100%;
+  max-width: var(--site-max-width);
+  margin-inline: auto;
+  padding: var(--site-space-3);
+  border-top: 2px solid var(--color-bg);
+  border-radius: var(--radius) var(--radius) 0 0;
+  background: var(--color-line);
+  color: var(--color-ink);
+}
+
+.banner[hidden] {
+  display: none;
+}
+
+.banner h2 {
+  font-size: var(--site-font-h3);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--site-space-2);
+}
+
+.accept,
+.decline {
+  flex: 1 1 10rem;
+  min-height: 44px;
+  padding: var(--site-space-2) var(--site-space-4);
+  border: 2px solid var(--color-bg);
+  border-radius: var(--radius);
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.accept {
+  background: var(--color-primary);
+  color: var(--color-primary-ink);
+}
+
+.decline {
+  border-color: var(--color-ink);
+  background: var(--color-surface);
+  color: var(--color-ink);
+}

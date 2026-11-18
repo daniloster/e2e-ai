@@ -1,0 +1,15 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "composite": true,
+    "emitDeclarationOnly": true,
+    "outDir": "node_modules/.tmp/tsc",
+    "lib": ["ES2020", "ES2021.Intl", "DOM", "DOM.Iterable"],
+    "jsx": "react-jsx",
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "allowImportingTsExtensions": true
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx", "vite/**/*.ts", "vite.config.ts", "package.json"],
+  "references": [{ "path": "../../apps-modules/i18n" }, { "path": "../../apps-modules/design-tokens" }]
+}

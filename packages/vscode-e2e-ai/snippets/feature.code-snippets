@@ -1,0 +1,59 @@
+{
+  "Feature": {
+    "prefix": "feature",
+    "body": [
+      "#${1:area} #${2:team}",
+      "Feature: ${3:What people can do}",
+      "  ${4:Why it matters, in one sentence.}",
+      "",
+      "  Background:",
+      "    @routine ${5}",
+      "",
+      "  Scenario: ${6:A behaviour}",
+      "    Given ${7}",
+      "    When ${8}",
+      "    Then ${9}",
+      ""
+    ],
+    "description": "Feature with tags, a Background that calls a routine, and a scenario"
+  },
+  "Scenario": {
+    "prefix": "scenario",
+    "body": [
+      "#${1:tag}",
+      "Scenario: ${2:A behaviour}",
+      "  Given ${3}",
+      "  When ${4}",
+      "  Then ${5}"
+    ],
+    "description": "Tagged scenario"
+  },
+  "Scenario Outline": {
+    "prefix": "outline",
+    "body": [
+      "Scenario Outline: ${1:A behaviour for each example}",
+      "  When ${2:I add a note \"<title>\"}",
+      "  Then ${3:I should see \"<title>\"}",
+      "",
+      "  Examples:",
+      "    | ${4:title} |",
+      "    | ${5:value} |"
+    ],
+    "description": "Scenario Outline with Examples"
+  },
+  "Background": {
+    "prefix": "background",
+    "body": [
+      "Background:",
+      "  @routine ${1}"
+    ],
+    "description": "Background (applies to the scenarios below it, until the next Background)"
+  },
+  "Global rule": {
+    "prefix": "global",
+    "body": [
+      "@global ${1:do not allow analytics when the app asks}"
+    ],
+    "description": "Standing rule (in a globals file such as features/global.feature): whenever its screen shows, the runner carries it out"
+  }
+}

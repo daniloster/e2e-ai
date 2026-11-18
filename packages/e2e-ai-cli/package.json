@@ -1,0 +1,16 @@
+{
+  "name": "@pn/e2e-ai-cli",
+  "private": true,
+  "type": "module",
+  "description": "Command line for @pn/e2e-ai: run features (web/iOS/Android via Playwright, Appium, Maestro, MCP), replay reviewed plans in CI, benchmark models, render reports.",
+  "bin": {
+    "e2e-ai": "src/cli.ts"
+  },
+  "scripts": {
+    "e2e-ai": "node src/cli.ts",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@pn/e2e-ai": "*"
+  }
+}

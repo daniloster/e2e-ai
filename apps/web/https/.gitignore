@@ -1,0 +1,2 @@
+# Generated self-signed cert for the local HTTPS dev server (not a secret to commit).
+*.pem

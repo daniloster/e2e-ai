@@ -1,0 +1,17 @@
+{
+  "name": "@pn/brand",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "pn-brand": "bin/pn-brand.mjs"
+  },
+  "scripts": {
+    "test": "vitest run --passWithNoTests",
+    "brand": "node bin/pn-brand.mjs"
+  },
+  "dependencies": {
+    "@pn/design-tokens": "*",
+    "@resvg/resvg-js": "2.6.2"
+  }
+}

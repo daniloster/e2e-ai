@@ -1,0 +1,98 @@
+/* Shared content-page styles: page header, hero, card grid, FAQ and the /s landing. Token colours
+   only. [hidden] always wins. */
+.page {
+  max-width: var(--site-max-width);
+  margin-inline: auto;
+  padding: var(--site-space-5) var(--site-space-3);
+}
+
+.page > h1 {
+  margin-bottom: var(--site-space-3);
+}
+
+.lead {
+  max-width: 44rem;
+  margin-bottom: var(--site-space-4);
+  color: var(--color-muted);
+  font-size: 1.125rem;
+}
+
+.hero {
+  display: grid;
+  gap: var(--site-space-4);
+  align-items: center;
+  padding-block: var(--site-space-6) var(--site-space-5);
+  border-bottom: 6px solid var(--color-primary);
+}
+
+.hero h1 {
+  max-width: 40rem;
+  color: var(--color-primary);
+}
+
+.heroText {
+  min-width: 0;
+}
+
+.heroShot {
+  width: 100%;
+  max-width: 20rem;
+  height: auto;
+  justify-self: center;
+}
+
+@media (min-width: 56rem) {
+  .hero {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    padding-block: var(--site-space-5);
+  }
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: var(--site-space-3);
+  padding: 0;
+  list-style: none;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--site-space-2);
+  padding: var(--site-space-3);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+}
+
+.faq {
+  display: grid;
+  gap: var(--site-space-4);
+}
+
+.faq h2 {
+  font-size: var(--site-font-h3);
+}
+
+.email {
+  color: var(--color-primary);
+  font-weight: 800;
+  word-break: break-all;
+}
+
+.status {
+  color: var(--color-muted);
+  font-weight: 800;
+}
+
+.status[hidden],
+.open[hidden],
+.invalid[hidden] {
+  display: none;
+}
+
+.invalid {
+  color: var(--color-secondary);
+  font-weight: 800;
+}

@@ -1,0 +1,13 @@
+{
+  "name": "@pn/design-tokens",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "vitest run --coverage --coverage.include='src/**/*.ts' --coverage.exclude='src/**/*.test.ts' --coverage.thresholds.lines=80"
+  }
+}

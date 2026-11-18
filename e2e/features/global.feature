@@ -1,0 +1,1 @@
+@global do not allow firebase user analytics

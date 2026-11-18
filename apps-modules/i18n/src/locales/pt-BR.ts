@@ -1,0 +1,74 @@
+// Reviewed by: developer (pending native pt-BR review)
+import type { enGB } from './en-GB';
+
+export const ptBR: Readonly<Record<keyof typeof enGB, string>> = {
+  'common.ok': 'OK',
+  'common.cancel': 'Cancelar',
+  'common.back': 'Voltar',
+  'common.loading': 'Carregando',
+  'common.linkErrorTitle': 'Link não aberto',
+  'common.linkInvalid': 'Este link está danificado ou incompleto. Peça um novo.',
+  'common.linkUnsupported':
+    'Este link precisa de uma versão mais nova do Pocket Notes. Atualize o app e tente de novo.',
+
+  'home.tagline': 'Escave o tabuleiro, um bloco de cada vez.',
+  'home.play': 'Jogar',
+  'home.settings': 'Ajustes',
+  'home.best': 'Melhor pontuação: {score}',
+  'home.noBest': 'Nenhuma pontuação ainda',
+
+  'play.title': 'Tabuleiro',
+  'play.dig': 'Escavar',
+  'play.digA11y_one': 'Escavar {count} bloco',
+  'play.digA11y_other': 'Escavar {count} blocos',
+  'play.blocksLeft_zero': 'Nenhum bloco restante',
+  'play.blocksLeft_one': 'Falta {count} bloco',
+  'play.blocksLeft_other': 'Faltam {count} blocos',
+  'play.score': 'Pontos {score}',
+  'play.moves': 'Jogadas {moves}',
+  'play.strength': 'Força',
+  'play.strengthOption': 'Força {count}',
+  'play.cleared': 'Tabuleiro limpo em {moves} jogadas!',
+  'play.newBest': 'Nova melhor pontuação!',
+  'play.undo': 'Desfazer',
+  'play.again': 'Jogar de novo',
+  'play.share': 'Compartilhar tabuleiro',
+  'play.shareMessage': 'Você consegue limpar este tabuleiro no Pocket Notes? {link}',
+  'play.shareFailed': 'Não deu para compartilhar. Tente de novo.',
+
+  'settings.title': 'Ajustes',
+  'settings.privacy': 'Privacidade',
+  'settings.analytics': 'Estatísticas de uso',
+  'settings.analyticsHint':
+    'Estatísticas de uso anônimas e relatórios de falhas nos ajudam a corrigir problemas. Nada é enviado sem a sua permissão.',
+  'settings.player': 'Jogador',
+  'settings.playerId': 'ID de jogador',
+  'settings.testBuild': 'Versão de teste: este ID de jogador é diferente do da versão da loja.',
+  'settings.version': 'Versão {version}',
+
+  'consent.title': 'Ajude a melhorar o Pocket Notes',
+  'consent.description':
+    'Podemos coletar estatísticas de uso anônimas e relatórios de falhas? Eles nunca incluem nada que você digita. Você pode mudar isso em Ajustes quando quiser.',
+  'consent.allow': 'Permitir',
+  'consent.decline': 'Não, obrigado',
+
+  'notes.open': 'Minhas notas',
+  'notes.signInTitle': 'Entre nas suas notas',
+  'notes.email': 'E-mail',
+  'notes.password': 'Senha',
+  'notes.signIn': 'Entrar',
+  'notes.signInFailed': 'E-mail ou senha incorretos.',
+  'notes.title': 'Minhas notas',
+  'notes.signedInAs': 'Conectado como {email}',
+  'notes.newLabel': 'Nova nota',
+  'notes.newPlaceholder': 'O que você precisa lembrar?',
+  'notes.add': 'Adicionar nota',
+  'notes.empty': 'Nenhuma nota ainda. Adicione a primeira.',
+  'notes.count_one': '{count} nota',
+  'notes.count_other': '{count} notas',
+  'notes.deleteA11y': 'Excluir {title}',
+  'notes.signOut': 'Sair',
+  'notes.loadFailed': 'Não foi possível carregar as notas. Tente novamente.',
+
+  'app.name': 'Pocket Notes',
+};

@@ -1,0 +1,3 @@
+Routine: create user with login "${email}" and password "${password}"
+
+create a user "${email}" with password "${password}" via API

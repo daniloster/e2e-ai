@@ -1,0 +1,46 @@
+.env
+node_modules
+**/node_modules
+.DS_Store
+dist/
+coverage/
+test-results/
+playwright-report/
+.firebase/
+.wrangler/
+*.log
+spikes/**/node_modules/
+apps/mobile/ios/Pods/
+apps/mobile/ios/build/
+apps/mobile/android/.gradle/
+apps/mobile/android/app/build/
+apps/mobile/android/build/
+*.keystore
+!apps/mobile/android/app/debug.keystore
+*.tsbuildinfo
+
+# Brand generator preview sheet, a review aid
+tools/brand/out/
+
+# Native build artefacts
+*.aab
+*.apk
+*.ipa
+*.xcarchive/
+
+# Native build outputs anywhere (app and spikes)
+**/ios/Pods/
+**/ios/build/
+**/android/.gradle/
+**/android/.kotlin/
+**/android/build/
+**/android/app/build/
+**/android/app/.cxx/
+**/xcuserdata/
+**/ios/.xcode.env.local
+.expo/
+**/.expo/
+
+# e2e-ai run reports (generated)
+e2e/reports/runs/
+.playwright-mcp/

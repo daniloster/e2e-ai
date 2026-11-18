@@ -1,0 +1,36 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "E2E Routine",
+  "scopeName": "source.e2e-routine",
+  "patterns": [
+    { "include": "source.e2e-feature#comment" },
+    {
+      "begin": "^\\s*(Routine)(:)",
+      "beginCaptures": {
+        "1": { "name": "keyword.control.routine.e2e storage.type.e2e" },
+        "2": { "name": "punctuation.separator.e2e" }
+      },
+      "end": "$",
+      "contentName": "entity.name.function.routine.e2e",
+      "patterns": [{ "include": "source.e2e-feature#inline" }]
+    },
+    {
+      "begin": "^\\s*(?:(Given|When|Then|And|But|\\*)\\s+)?(each)\\b",
+      "beginCaptures": {
+        "1": { "name": "keyword.other.step.e2e" },
+        "2": { "name": "keyword.control.loop.each.e2e" }
+      },
+      "end": "$",
+      "patterns": [{ "include": "source.e2e-feature#variable" }]
+    },
+    { "include": "source.e2e-feature#routine-call" },
+    { "include": "source.e2e-feature#step" },
+    { "include": "source.e2e-feature#table" },
+    {
+      "begin": "^(?=\\s*\\S)",
+      "end": "$",
+      "contentName": "meta.step.e2e",
+      "patterns": [{ "include": "source.e2e-feature#inline" }]
+    }
+  ]
+}

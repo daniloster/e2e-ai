@@ -1,0 +1,42 @@
+/* Store badges: token colours only; a coming-soon badge is dimmed and not a link. */
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--site-space-3);
+  padding: 0;
+  list-style: none;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--site-space-2);
+  min-height: 44px;
+  padding: var(--site-space-2) var(--site-space-3);
+  border: 2px solid var(--color-ink);
+  border-radius: var(--radius);
+  background: var(--color-bg);
+  color: var(--color-ink);
+  font-weight: 800;
+  text-decoration: none;
+  line-height: 1.2;
+}
+
+.glyph {
+  flex: none;
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+}
+
+.soon {
+  color: var(--color-muted);
+  border-color: var(--color-muted);
+}
+
+.soonText {
+  font-size: 0.875rem;
+  font-weight: 400;
+}

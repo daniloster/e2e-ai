@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Model benchmark</title>
+<!-- The pocket model reads this brief to write the explanation; numbers come from the data. -->
+<script type="text/x-e2e-ai-brief">
+Audience: the person choosing which pocket model the team runs on CI and on phones. They trade
+accuracy (scenarios passed when each model plans every step itself, guard repairs needed) against speed (ms per planned step) and
+size (GB, must fit a phone). They want the recommended model, why, and what they give up compared
+with the next best option.
+</script>
+<style>
+  :root { --bg:#f5f6f8; --panel:#fff; --ink:#15181d; --muted:#5f6875; --line:#e1e5ea; --pass:#1f8f55; --fail:#c8343c; --accent:#3b5bdb; --accent-bg:#e8edff; --ai:#7048e8; --ai-bg:#f1ecff; --best:#f59f00;
+    --mono: ui-monospace, SFMono-Regular, Menlo, monospace; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#0f1216; --panel:#171b21; --ink:#e8ebf0; --muted:#9aa4b2; --line:#2a313b; --pass:#4cc38a; --fail:#ff6b72; --accent:#8ea6ff; --accent-bg:#1c2340; --ai:#b197fc; --ai-bg:#241d3d; --best:#ffc94d; } }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  .wrap { max-width: 1180px; margin:0 auto; padding: 24px 16px 64px; }
+  h1 { font-size: 26px; margin: 0 0 6px; } h2 { font-size: 17px; margin: 0 0 12px; }
+  .meta { display:flex; flex-wrap:wrap; gap:6px; margin-bottom: 18px; }
+  .chip { padding:2px 10px; border-radius:999px; background:var(--panel); border:1px solid var(--line); color:var(--muted); font-size:12.5px; }
+  .chip b { color: var(--ink); }
+  .card { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:16px; margin-bottom: 16px; }
+  .rec { border-color: color-mix(in srgb, var(--best) 50%, var(--line)); background: linear-gradient(0deg, var(--panel), var(--panel)); }
+  .rec .who { font-size: 22px; font-weight: 750; }
+  .rec .why { color: var(--muted); }
+  .ai-badge { font-size: 12px; font-weight: 600; color: var(--ai); background: var(--ai-bg); border-radius: 999px; padding: 2px 10px; }
+  .models { display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin-bottom: 16px; }
+  .model { position: relative; }
+  .model.best { outline: 2px solid var(--best); }
+  .model .name { font: 700 16px var(--mono); }
+  .model .ep { font: 12px var(--mono); color: var(--muted); word-break: break-all; }
+  .model dl { display:grid; grid-template-columns: 1fr auto; gap: 4px 12px; margin: 12px 0 0; font-size: 14px; }
+  .model dt { color: var(--muted); } .model dd { margin:0; text-align:right; font-variant-numeric: tabular-nums; font-weight: 600; }
+  .star { position:absolute; top: 12px; right: 12px; font: 700 11px system-ui; color: #1b1300; background: var(--best); border-radius: 999px; padding: 2px 8px; }
+  .err { color: var(--fail); font: 13px var(--mono); }
+  .metrics { display:grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 12px; }
+  .metric h3 { font-size: 14px; margin: 0 0 2px; } .metric .hint { color: var(--muted); font-size: 12.5px; margin-bottom: 10px; }
+  .bar { display:grid; grid-template-columns: 150px 1fr 70px; gap: 8px; align-items:center; margin: 6px 0; font-size: 13px; }
+  .bar .label { font-family: var(--mono); overflow:hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bar .track { height: 12px; background: var(--bg); border-radius: 999px; overflow: hidden; }
+  .bar .track, .bar .fill { display: block; }
+  td.mode { font: 600 12.5px var(--mono); white-space: nowrap; }
+  td.mode small { display: block; font-weight: 400; color: var(--muted); white-space: normal; }
+  td .sub { color: var(--muted); font-size: 12px; }
+  .bar .fill { height: 100%; background: var(--accent); border-radius: 999px; }
+  .bar.best .fill { background: var(--best); }
+  .bar .v { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
+  table { width:100%; border-collapse: collapse; font-size: 14px; }
+  th, td { padding: 7px 8px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+  th { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+  td.c { text-align: center; }
+  .ok { color: var(--pass); font-weight: 700; } .ko { color: var(--fail); font-weight: 700; }
+  .path { font: 12px var(--mono); color: var(--muted); }
+  details summary { cursor: pointer; font-weight: 600; }
+  ul.fails { font: 12.5px var(--mono); color: var(--muted); margin: 8px 0 0; padding-left: 18px; }
+  .scroll { overflow-x: auto; }
+  footer { color: var(--muted); font-size: 12.5px; margin-top: 24px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1 id="title">Model benchmark</h1>
+  <div class="meta" id="meta"></div>
+
+  <section class="card rec" id="rec"></section>
+
+  <section class="card">
+    <h2>What the numbers say</h2>
+    <p data-ai="summary" style="margin:0"
+       data-ai-prompt="Write 3-4 sentences: which model is recommended and why (scenarios passed, guard repairs, speed, size), and what the team gives up compared with the next best model. Name models exactly as in the data.">The explanation is generated after the benchmark.</p>
+    <div style="margin-top:8px"><span class="ai-badge" id="ai-badge"></span> <span class="path" id="ai-note"></span></div>
+  </section>
+
+  <section class="models" id="models"></section>
+
+  <section class="metrics" id="metrics"></section>
+
+  <section class="card" id="runs-card" style="margin-top:16px" hidden>
+    <h2>Runs: no cache → cache → cache with one scenario planned fresh</h2>
+    <p class="path" style="margin:-6px 0 10px">Step time = plan (when planned) + act + check. "Planned" steps were interpreted by the model in that run; "cached" steps replayed a stored plan. Memory = peak while the run lasted.</p>
+    <div class="scroll"><table id="runs"></table></div>
+  </section>
+  <section class="metrics" id="mode-metrics" style="margin-top:12px"></section>
+
+  <section class="card" style="margin-top:16px">
+    <h2>Scenario by scenario</h2>
+    <div class="scroll"><table id="matrix"></table></div>
+  </section>
+
+  <section class="card">
+    <h2>Where each model failed</h2>
+    <div id="misses"></div>
+  </section>
+
+  <footer id="footer"></footer>
+</div>
+<script>
+const DATA = /*__REPORT_DATA__*/null;
+(function () {
+  "use strict";
+  if (!DATA) return;
+  const $ = (s) => document.querySelector(s);
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const ms = (n) => (n >= 60000 ? `${Math.floor(n / 60000)}m ${Math.round((n % 60000) / 1000)}s` : `${(n / 1000).toFixed(1)}s`);
+  const M = DATA.models, ok = M.filter((m) => !m.suite.error);
+  const rec = DATA.recommended;
+  $("#title").textContent = DATA.title;
+  $("#meta").innerHTML = [DATA.environment ? ["Machine", DATA.environment] : null, ["Target", `${DATA.target} · ${DATA.platform}`], ["Started", new Date(DATA.startedAt).toLocaleString()], ["Duration", ms(DATA.durationMs)],
+    ["Models", M.length], ["Features", DATA.features.length], DATA.tags ? ["Tags", DATA.tags] : null].filter(Boolean)
+    .map(([k, v]) => `<span class="chip">${esc(k)} <b>${esc(v)}</b></span>`).join("");
+  $("#rec").innerHTML = rec ? `<div class="path">Recommended (rule: most scenarios passed → fewest guard repairs → fastest)</div><div class="who">★ ${esc(rec.name)}</div><div class="why">${esc(rec.why)}</div>`
+    : `<div class="who">No model completed the suite.</div>`;
+  const sum = DATA.ai.sections.summary;
+  if (sum) { document.querySelector('[data-ai="summary"]').textContent = sum.text; $("#ai-badge").textContent = sum.accepted ? `Written by ${sum.model} · checked against the numbers` : "Facts (no checked AI text)"; $("#ai-note").textContent = sum.accepted ? "" : (sum.reason || ""); }
+
+  const planner = (m, set) => (m.planner.find((p) => p.set === set) || {}).exact;
+  $("#models").innerHTML = M.map((m) => `
+    <article class="card model ${rec && rec.name === m.name ? "best" : ""}">
+      ${rec && rec.name === m.name ? '<span class="star">RECOMMENDED</span>' : ""}
+      <div class="name">${esc(m.name)}</div>
+      <div class="ep">${esc(m.endpoint)}</div>
+      ${m.suite.error ? `<p class="err">${esc(m.suite.error)}</p>` : `
+      <dl>
+        <dt>Size</dt><dd>${m.info.sizeGB ? `${m.info.sizeGB} GB` : "—"}</dd>
+        <dt>Parameters / quant</dt><dd>${esc(m.info.parameters || "—")} ${esc(m.info.quantization || "")}</dd>
+        <dt>Scenarios passed</dt><dd class="${m.suite.failed ? "ko" : "ok"}">${m.suite.passed}/${m.suite.scenarios}</dd>
+        ${m.planner.map((p) => `<dt>Exact plans · ${esc(p.set)}</dt><dd>${p.exact}%</dd>`).join("")}
+        <dt>ms per planned step</dt><dd>${m.suite.msPerPlannedStep}</dd>
+        <dt>Model time (suite)</dt><dd>${ms(m.suite.llm.ms)}</dd>
+        <dt>Guard repairs · re-plans</dt><dd>${m.suite.guardFixes} · ${m.suite.replans}</dd>
+      </dl>
+      <p style="margin:12px 0 0"><a href="${esc(m.report)}">Open ${esc(m.name)}'s run report →</a></p>`}
+    </article>`).join("");
+
+  // Metric bars: best value marked; "lower is better" metrics invert the bar.
+  const metric = (title, hint, get, unit, lowerBetter) => {
+    const vals = ok.map((m) => ({ m, v: get(m) })).filter((x) => x.v != null);
+    if (!vals.length) return "";
+    const max = Math.max(...vals.map((x) => x.v), 1);
+    const best = lowerBetter ? Math.min(...vals.map((x) => x.v)) : Math.max(...vals.map((x) => x.v));
+    return `<div class="card metric"><h3>${esc(title)}</h3><div class="hint">${esc(hint)}</div>${vals.map(({ m, v }) =>
+      `<div class="bar ${v === best ? "best" : ""}"><span class="label" title="${esc(m.name)}">${esc(m.name)}</span><span class="track"><span class="fill" style="width:${(100 * v) / max}%"></span></span><span class="v">${v}${unit}</span></div>`).join("")}</div>`;
+  };
+  const sets = [...new Set(ok.flatMap((m) => m.planner.map((p) => p.set)))];
+  $("#metrics").innerHTML = [
+    metric("Scenarios passed", "End-to-end, every step planned by the model (higher is better)", (m) => m.suite.passRate, "%", false),
+    ...sets.map((s) => metric(`Exact plans — ${s}`, s === "heldout" ? "Steps never used to tune the tool (higher is better)" : "Labelled steps, docs as written (higher is better)", (m) => planner(m, s), "%", false)),
+    metric("Speed", "Model time per planned step (lower is better)", (m) => m.suite.msPerPlannedStep, " ms", true),
+    metric("Size", "Weights on disk — must fit a phone (lower is better)", (m) => m.info.sizeGB ?? null, " GB", true),
+  ].join("");
+
+  // Runs per mode: duration, memory, mean/median step time (planned vs cached), plan time.
+  const withModes = ok.filter((m) => m.modes && m.modes.length);
+  if (withModes.length) {
+    $("#runs-card").hidden = false;
+    const s = (x) => (x.n ? `${x.mean} / ${x.median}` : "—");
+    const gb = (x) => (x == null ? "—" : `${x} GB`);
+    $("#runs").innerHTML = `<thead><tr><th>Model</th><th>Mode</th><th class="num">Took</th><th class="num">Passed</th><th class="num">Memory peak</th>
+      <th class="num">Planned steps<br><span class="sub">mean / median ms</span></th><th class="num">Cached steps<br><span class="sub">mean / median ms</span></th><th class="num">Model time per planned step<br><span class="sub">mean / median ms</span></th><th></th></tr></thead><tbody>${
+      withModes.flatMap((m) => m.modes.map((x, i) => `<tr>
+        ${i === 0 ? `<td rowspan="${m.modes.length}" style="font-family:var(--mono);font-weight:700">${esc(m.name)}</td>` : ""}
+        <td class="mode">${esc(x.mode)}${x.freshScenario ? `<small>fresh: ${esc(x.freshScenario)}</small>` : ""}</td>
+        <td class="num">${ms(x.durationMs)}</td>
+        <td class="num ${x.passed === x.scenarios ? "ok" : "ko"}">${x.passed}/${x.scenarios}</td>
+        <td class="num">${gb(x.memory.containerPeakGB ?? x.memory.modelPeakGB)}${x.memory.containerPeakGB != null && x.memory.modelPeakGB != null ? `<div class="sub">model ${x.memory.modelPeakGB} GB</div>` : ""}</td>
+        <td class="num">${x.stepsPlanned ? `${s(x.stepMs.planned)}<div class="sub">${x.stepsPlanned} steps</div>` : "—"}</td>
+        <td class="num">${x.stepsCached ? `${s(x.stepMs.cached)}<div class="sub">${x.stepsCached} steps</div>` : "—"}</td>
+        <td class="num">${s(x.planMs)}</td>
+        <td><a href="${esc(x.report)}">report</a></td></tr>`)).join("")}</tbody>`;
+    const modeMetric = (title, hint, mode, get, unit) => {
+      const vals = withModes.map((m) => ({ m, x: (m.modes || []).find((y) => y.mode === mode) })).filter((v) => v.x && get(v.x) != null && get(v.x) > 0);
+      if (!vals.length) return "";
+      const max = Math.max(...vals.map((v) => get(v.x)), 1), best = Math.min(...vals.map((v) => get(v.x)));
+      return `<div class="card metric"><h3>${esc(title)}</h3><div class="hint">${esc(hint)}</div>${vals.map(({ m, x }) => `<div class="bar ${get(x) === best ? "best" : ""}"><span class="label">${esc(m.name)}</span><span class="track"><span class="fill" style="width:${(100 * get(x)) / max}%"></span></span><span class="v">${get(x)}${unit}</span></div>`).join("")}</div>`;
+    };
+    $("#mode-metrics").innerHTML = [
+      modeMetric("Uncached run — total time", "Every step planned by the model (lower is better)", "no-cache", (x) => Math.round(x.durationMs / 1000), " s"),
+      modeMetric("Planned step — median", "no-cache run, plan + act + check (lower is better)", "no-cache", (x) => x.stepMs.planned.median, " ms"),
+      modeMetric("Planned step — mean", "no-cache run (lower is better)", "no-cache", (x) => x.stepMs.planned.mean, " ms"),
+      modeMetric("Cached step — median", "cache run, replayed plans (lower is better)", "cache", (x) => x.stepMs.cached.median, " ms"),
+      modeMetric("One fresh scenario — total time", "cache run with one scenario planned (lower is better)", "one-fresh", (x) => Math.round(x.durationMs / 1000), " s"),
+      modeMetric("Memory peak", "Container (or model) memory while planning (lower is better)", "no-cache", (x) => x.memory.containerPeakGB ?? x.memory.modelPeakGB, " GB"),
+    ].join("");
+  }
+
+  // Scenario × model matrix (links into each model's run report).
+  const keys = [];
+  for (const m of ok) for (const s of m.scenarios) if (!keys.find((k) => k.key === s.key)) keys.push(s);
+  $("#matrix").innerHTML = `<thead><tr><th>Scenario</th>${ok.map((m) => `<th class="c">${esc(m.name)}</th>`).join("")}</tr></thead><tbody>${keys.map((k) => `<tr><td>${esc(k.name)}<div class="path">${esc(k.file)}:${k.line ?? ""}</div></td>${ok.map((m) => {
+    const s = m.scenarios.find((x) => x.key === k.key);
+    if (!s) return '<td class="c">—</td>';
+    return `<td class="c"><a href="${esc(m.report)}#${esc(s.id)}" title="${esc(s.error || "passed")}" class="${s.status === "passed" ? "ok" : "ko"}">${s.status === "passed" ? "✓" : "✕"}</a></td>`;
+  }).join("")}</tr>`).join("")}</tbody>`;
+
+  $("#misses").innerHTML = ok.map((m) => {
+    const bad = m.scenarios.filter((s) => s.status === "failed");
+    return `<details ${bad.length ? "open" : ""}><summary>${esc(m.name)} — ${bad.length ? `${bad.length} scenario${bad.length === 1 ? "" : "s"} failed` : "nothing failed"}</summary>${bad.length ? `<ul class="fails">${bad.map((s) => `<li><a href="${esc(m.report)}#${esc(s.id)}">${esc(s.name)}</a> — ${esc(s.error || "")}</li>`).join("")}</ul>` : ""}</details>`;
+  }).join("");
+  $("#footer").innerHTML = `Generated ${esc(new Date(DATA.generatedAt).toLocaleString())} by @pn/e2e-ai · <a href="benchmark.json">benchmark.json</a> · features: ${DATA.features.map(esc).join(", ")}`;
+})();
+</script>
+</body>
+</html>

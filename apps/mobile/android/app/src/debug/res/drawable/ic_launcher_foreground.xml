@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="108dp" android:height="108dp" android:viewportWidth="120" android:viewportHeight="120">
+  <group android:scaleX="0.4938" android:scaleY="0.4938" android:translateX="30.3722" android:translateY="30.3722">
+    <path android:pathData="M14 52 L38 30 L48 52 Z" android:fillColor="#F4B85E" android:strokeColor="#14181F" android:strokeWidth="3" android:strokeLineJoin="round"/>
+    <path android:pathData="M38 30 L82 30 L72 52 L48 52 Z" android:fillColor="#F8D093" android:strokeColor="#14181F" android:strokeWidth="3" android:strokeLineJoin="round"/>
+    <path android:pathData="M82 30 L106 52 L72 52 Z" android:fillColor="#F2A93B" android:strokeColor="#14181F" android:strokeWidth="3" android:strokeLineJoin="round"/>
+    <path android:pathData="M14 52 L48 52 L60 108 Z" android:fillColor="#F2A93B" android:strokeColor="#14181F" android:strokeWidth="3" android:strokeLineJoin="round"/>
+    <path android:pathData="M48 52 L72 52 L60 108 Z" android:fillColor="#F4B85E" android:strokeColor="#14181F" android:strokeWidth="3" android:strokeLineJoin="round"/>
+    <path android:pathData="M72 52 L106 52 L60 108 Z" android:fillColor="#9D6E26" android:strokeColor="#14181F" android:strokeWidth="3" android:strokeLineJoin="round"/>
+    <path android:pathData="M100 9 L102.6 17.4 L111 20 L102.6 22.6 L100 31 L97.4 22.6 L89 20 L97.4 17.4 Z" android:fillColor="#EEF1F5" android:strokeColor="#14181F" android:strokeWidth="3" android:strokeLineJoin="round"/>
+  </group>
+  <path android:pathData="M-3.0739 -46.6317 L166.6317 123.0739 L158.1464 131.5592 L-11.5592 -38.1464 Z" android:fillColor="#F06A6A"/>
+  <path android:pathData="M73.7179 34.4027 L76.2635 36.9483 L76.2635 38.6454 L73.7179 41.191 L72.0208 41.191 L69.4752 38.6454 Z M73.8027 36.3543 L74.9907 37.5423 L74.9907 38.0514 L73.1239 39.9182 L72.6148 39.9182 L71.4268 38.7302 Z M77.9605 38.6454 L81.3546 42.0395 L80.4212 42.9729 L78.0454 40.597 L77.3241 41.3182 L79.1909 43.185 L78.2575 44.1184 L76.3907 42.2516 L75.6695 42.9729 L78.0454 45.3487 L77.112 46.2821 L73.7179 42.888 Z M82.2032 42.888 L83.2638 43.9487 L81.0152 47.4701 L84.5366 45.2215 L85.5973 46.2821 L80.2091 49.3793 L79.106 48.2762 Z" android:fillColor="#FFFFFF" android:fillType="evenOdd"/>
+</vector>

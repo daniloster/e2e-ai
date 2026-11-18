@@ -1,0 +1,21 @@
+/* The /get page: centred, token colours only. [hidden] always wins on the status. */
+.get {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--site-space-3);
+  max-width: var(--site-max-width);
+  margin-inline: auto;
+  padding: var(--site-space-5) var(--site-space-3);
+  text-align: center;
+}
+
+.status {
+  display: block;
+  color: var(--color-muted);
+  font-weight: 800;
+}
+
+.status[hidden] {
+  display: none;
+}

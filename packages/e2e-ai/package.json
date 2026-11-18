@@ -1,0 +1,26 @@
+{
+  "name": "@pn/e2e-ai",
+  "private": true,
+  "type": "module",
+  "description": "Runs Gherkin features end to end against web and mobile apps, planning each step with a small on-device-class LLM over an app context of pockets (data, access, screens).",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./playwright": "./src/playwright.ts"
+  },
+  "scripts": {
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@cucumber/gherkin": "43.0.0",
+    "@cucumber/messages": "35.0.0",
+    "@modelcontextprotocol/sdk": "1.32.2",
+    "ws": "8.23.0",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@playwright/mcp": "0.0.86",
+    "@types/ws": "8.18.2"
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "Routine": {
+    "prefix": "routine",
+    "body": ["Routine: ${1:create something} \"\\${${2:name}}\"", "", "${3:create a thing called \"\\${$2}\" via API}", ""],
+    "description": "Routine with one parameter"
+  },
+  "Routine with table": {
+    "prefix": "routine-table",
+    "body": ["Routine: ${1:user} \"\\${email}\" has ${2:notes}: \\${table:${2}[${3:title, description}]}", "", "each \\${table:${2}}", "  ${4:create a note with title \"\\${title}\" and description \"\\${description}\" via API}", ""],
+    "description": "Routine that takes a data table and loops over it"
+  },
+  "each": {
+    "prefix": "each",
+    "body": ["each \\${table:${1:rows}}", "  ${2}"],
+    "description": "Loop over a table parameter"
+  }
+}

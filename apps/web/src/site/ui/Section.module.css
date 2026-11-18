@@ -1,0 +1,18 @@
+/* A site page section: vertical rhythm, raised tone and the centred container. */
+.section {
+  padding-block: var(--site-space-5);
+}
+
+.raised {
+  background: var(--color-surface);
+}
+
+.inner {
+  max-width: var(--site-max-width);
+  margin-inline: auto;
+  padding-inline: var(--site-space-3);
+}
+
+.inner > h2 {
+  margin-bottom: var(--site-space-3);
+}

@@ -1,0 +1,88 @@
+/* The one global site stylesheet: reset, type scale, focus ring, reduced motion.
+   Colours are the --color-* tokens Head injects on :root; this file declares none. */
+:root {
+  color-scheme: dark;
+  font-family: var(--font-body, system-ui, sans-serif);
+  --site-space-1: 0.25rem;
+  --site-space-2: 0.5rem;
+  --site-space-3: 1rem;
+  --site-space-4: 1.5rem;
+  --site-space-5: 2.5rem;
+  --site-space-6: 4rem;
+  --site-max-width: 72rem;
+  --site-font-body: 1rem;
+  --site-font-h1: clamp(2rem, 6vw, 3.5rem);
+  --site-font-h2: clamp(1.5rem, 4vw, 2.25rem);
+  --site-font-h3: 1.25rem;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-ink);
+  font-family: inherit;
+  font-size: var(--site-font-body);
+  line-height: 1.6;
+}
+
+h1,
+h2,
+h3,
+h4,
+p,
+ul {
+  margin: 0;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-display, system-ui, sans-serif);
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+h1 {
+  font-weight: 900;
+  font-size: var(--site-font-h1);
+}
+
+h2 {
+  font-size: var(--site-font-h2);
+}
+
+h3 {
+  font-size: var(--site-font-h3);
+}
+
+img,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+a {
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-primary);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+    animation: none !important;
+    scroll-behavior: auto !important;
+  }
+}

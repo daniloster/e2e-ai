@@ -1,0 +1,73 @@
+// The source catalog: British English. Every key here exists in es.ts and pt-BR.ts.
+export const enGB = {
+  'common.ok': 'OK',
+  'common.cancel': 'Cancel',
+  'common.back': 'Back',
+  'common.loading': 'Loading',
+  'common.linkErrorTitle': 'Link not opened',
+  'common.linkInvalid': 'This link is damaged or incomplete. Ask for a new one.',
+  'common.linkUnsupported':
+    'This link needs a newer version of Pocket Notes. Update the app and try again.',
+
+  'home.tagline': 'Dig through the board, one block at a time.',
+  'home.play': 'Play',
+  'home.settings': 'Settings',
+  'home.best': 'Best score: {score}',
+  'home.noBest': 'No score yet',
+
+  'play.title': 'Board',
+  'play.dig': 'Dig',
+  'play.digA11y_one': 'Dig {count} block',
+  'play.digA11y_other': 'Dig {count} blocks',
+  'play.blocksLeft_zero': 'No blocks left',
+  'play.blocksLeft_one': '{count} block left',
+  'play.blocksLeft_other': '{count} blocks left',
+  'play.score': 'Score {score}',
+  'play.moves': 'Moves {moves}',
+  'play.strength': 'Strength',
+  'play.strengthOption': 'Strength {count}',
+  'play.cleared': 'Board cleared in {moves} moves!',
+  'play.newBest': 'New best score!',
+  'play.undo': 'Undo',
+  'play.again': 'Play again',
+  'play.share': 'Share this board',
+  'play.shareMessage': 'Can you clear this board in Pocket Notes? {link}',
+  'play.shareFailed': 'Sharing did not work. Try again.',
+
+  'settings.title': 'Settings',
+  'settings.privacy': 'Privacy',
+  'settings.analytics': 'Usage statistics',
+  'settings.analyticsHint':
+    'Anonymous usage statistics and crash reports help us fix problems. Nothing is sent without your permission.',
+  'settings.player': 'Player',
+  'settings.playerId': 'Player ID',
+  'settings.testBuild':
+    'Test build: this player ID differs from the one in the store version of the app.',
+  'settings.version': 'Version {version}',
+
+  'consent.title': 'Help us improve Pocket Notes',
+  'consent.description':
+    'Can we collect anonymous usage statistics and crash reports? They never include anything you type. You can change this in Settings at any time.',
+  'consent.allow': 'Allow',
+  'consent.decline': 'No thanks',
+
+  'notes.open': 'My notes',
+  'notes.signInTitle': 'Sign in to your notes',
+  'notes.email': 'Email',
+  'notes.password': 'Password',
+  'notes.signIn': 'Sign in',
+  'notes.signInFailed': 'Wrong email or password.',
+  'notes.title': 'My notes',
+  'notes.signedInAs': 'Signed in as {email}',
+  'notes.newLabel': 'New note',
+  'notes.newPlaceholder': 'What do you need to remember?',
+  'notes.add': 'Add note',
+  'notes.empty': 'No notes yet. Add your first one.',
+  'notes.count_one': '{count} note',
+  'notes.count_other': '{count} notes',
+  'notes.deleteA11y': 'Delete {title}',
+  'notes.signOut': 'Sign out',
+  'notes.loadFailed': 'Notes could not be loaded. Try again.',
+
+  'app.name': 'Pocket Notes',
+};

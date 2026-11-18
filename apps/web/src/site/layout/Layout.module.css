@@ -1,0 +1,187 @@
+/* Shared site layout styles: language switch, header, nav, main, footer.
+   Token colours only; the focus ring of site.css is never removed. */
+.langs {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--site-space-3);
+  padding: 0;
+  list-style: none;
+}
+
+.langLink {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--color-muted);
+  text-decoration: none;
+}
+
+.langLink[aria-current='page'] {
+  color: var(--color-ink);
+  font-weight: 800;
+  text-decoration: underline;
+}
+
+.footer {
+  max-width: var(--site-max-width);
+  margin-inline: auto;
+  padding: var(--site-space-5) var(--site-space-3);
+  border-top: 2px solid var(--color-line);
+}
+
+.footerLinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--site-space-2) var(--site-space-4);
+  margin-bottom: var(--site-space-3);
+  padding: 0;
+  list-style: none;
+}
+
+.footerLinks a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+
+.settings {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  margin-bottom: var(--site-space-3);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-muted);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.settings[hidden] {
+  display: none;
+}
+
+.footerNote {
+  color: var(--color-muted);
+  font-size: 0.875rem;
+}
+
+/* Off-screen until focused, then over the TV bar at the top left. */
+.skip {
+  position: absolute;
+  top: var(--site-space-2);
+  left: var(--site-space-2);
+  z-index: 10;
+  padding: var(--site-space-2) var(--site-space-3);
+  border-radius: var(--radius);
+  background: var(--color-primary);
+  color: var(--color-primary-ink);
+  font-weight: 800;
+  transform: translateY(-200%);
+}
+
+.skip:focus {
+  transform: none;
+}
+
+.header {
+  border-bottom: 2px solid var(--color-line);
+}
+
+.headerRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--site-space-2) var(--site-space-4);
+  max-width: var(--site-max-width);
+  margin-inline: auto;
+  padding: var(--site-space-2) var(--site-space-3);
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--site-space-2);
+  min-height: 44px;
+  margin-right: auto;
+  font-weight: 900;
+  text-decoration: none;
+}
+
+.nav ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--site-space-3);
+  padding: 0;
+  list-style: none;
+}
+
+.navLink {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  text-decoration: none;
+}
+
+.navLink[aria-current='page'] {
+  font-weight: 800;
+  text-decoration: underline;
+}
+
+.main {
+  display: block;
+}
+
+.localeSuggestion {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--site-space-1) var(--site-space-3);
+  padding: var(--site-space-1) var(--site-space-3);
+  background: var(--color-line);
+  color: var(--color-ink);
+  font-size: 0.875rem;
+}
+
+.localeSuggestion[hidden] {
+  display: none;
+}
+
+.localeSuggestion p {
+  margin: 0;
+}
+
+.localeSuggestion a,
+.localeSuggestion button {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding-inline: var(--site-space-2);
+  font: inherit;
+  font-weight: 800;
+}
+
+.localeSuggestion a {
+  color: var(--color-primary);
+}
+
+.localeSuggestion button {
+  border: 0;
+  background: none;
+  color: var(--color-ink);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* The "still being built" note at the top of every page. */
+.notice {
+  box-sizing: border-box;
+  width: calc(min(var(--site-max-width), 100%) - 2 * var(--site-space-3));
+  margin: var(--site-space-3) auto 0;
+  padding: var(--site-space-2) var(--site-space-3);
+  border-left: 6px solid var(--color-primary);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  color: var(--color-ink);
+}

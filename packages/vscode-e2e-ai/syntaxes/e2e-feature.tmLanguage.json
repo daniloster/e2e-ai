@@ -1,0 +1,315 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "E2E Feature",
+  "scopeName": "source.e2e-feature",
+  "patterns": [
+    {
+      "include": "#comment"
+    },
+    {
+      "include": "#global"
+    },
+    {
+      "include": "#tagline"
+    },
+    {
+      "include": "#headers"
+    },
+    {
+      "include": "#routine-call"
+    },
+    {
+      "include": "#step"
+    },
+    {
+      "include": "#table"
+    },
+    {
+      "include": "#docstring"
+    }
+  ],
+  "repository": {
+    "comment": {
+      "match": "^\\s*#(?=\\s|$).*$",
+      "name": "comment.line.number-sign.e2e"
+    },
+    "tagline": {
+      "match": "^\\s*((?:[#@][A-Za-z0-9_][\\w-]*\\s*)+)$",
+      "captures": {
+        "1": {
+          "patterns": [
+            {
+              "match": "#[A-Za-z0-9_][\\w-]*",
+              "name": "entity.name.tag.hash.e2e"
+            },
+            {
+              "match": "@[A-Za-z0-9_][\\w-]*",
+              "name": "entity.name.tag.at.e2e"
+            }
+          ]
+        }
+      }
+    },
+    "headers": {
+      "patterns": [
+        {
+          "match": "^\\s*(Feature|Rule)(:)(.*)$",
+          "captures": {
+            "1": {
+              "name": "keyword.control.feature.e2e"
+            },
+            "2": {
+              "name": "punctuation.separator.e2e"
+            },
+            "3": {
+              "name": "entity.name.section.e2e markup.heading.e2e"
+            }
+          }
+        },
+        {
+          "match": "^\\s*(Background)(:)(.*)$",
+          "captures": {
+            "1": {
+              "name": "keyword.control.background.e2e storage.type.e2e"
+            },
+            "2": {
+              "name": "punctuation.separator.e2e"
+            },
+            "3": {
+              "name": "entity.name.section.e2e"
+            }
+          }
+        },
+        {
+          "match": "^\\s*(Scenario Outline|Scenario Template|Scenario|Example|Examples|Scenarios)(:)(.*)$",
+          "captures": {
+            "1": {
+              "name": "keyword.control.scenario.e2e"
+            },
+            "2": {
+              "name": "punctuation.separator.e2e"
+            },
+            "3": {
+              "name": "entity.name.function.scenario.e2e markup.bold.e2e"
+            }
+          }
+        }
+      ]
+    },
+    "routine-call": {
+      "begin": "^\\s*(?:(Given|When|Then|And|But|\\*)\\s+)?(@routine)\\b",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.other.step.e2e"
+        },
+        "2": {
+          "name": "keyword.other.routine.e2e storage.modifier.e2e"
+        }
+      },
+      "end": "$",
+      "contentName": "entity.name.function.routine-call.e2e",
+      "patterns": [
+        {
+          "include": "#inline"
+        }
+      ]
+    },
+    "step": {
+      "patterns": [
+        {
+          "begin": "^\\s*(Given)\\b",
+          "beginCaptures": {
+            "1": {
+              "name": "keyword.step.given.e2e support.type.e2e"
+            }
+          },
+          "end": "$",
+          "patterns": [
+            {
+              "include": "#inline"
+            }
+          ]
+        },
+        {
+          "begin": "^\\s*(When)\\b",
+          "beginCaptures": {
+            "1": {
+              "name": "keyword.step.when.e2e keyword.control.e2e"
+            }
+          },
+          "end": "$",
+          "patterns": [
+            {
+              "include": "#inline"
+            }
+          ]
+        },
+        {
+          "begin": "^\\s*(Then)\\b",
+          "beginCaptures": {
+            "1": {
+              "name": "keyword.step.then.e2e entity.name.function.e2e"
+            }
+          },
+          "end": "$",
+          "patterns": [
+            {
+              "include": "#inline"
+            }
+          ]
+        },
+        {
+          "begin": "^\\s*(And|But|\\*)(?=\\s)",
+          "beginCaptures": {
+            "1": {
+              "name": "keyword.step.and.e2e keyword.operator.e2e"
+            }
+          },
+          "end": "$",
+          "patterns": [
+            {
+              "include": "#inline"
+            }
+          ]
+        }
+      ]
+    },
+    "inline": {
+      "patterns": [
+        {
+          "include": "#string"
+        },
+        {
+          "include": "#variable"
+        },
+        {
+          "include": "#outline-param"
+        },
+        {
+          "include": "#number"
+        },
+        {
+          "match": "\\bvia (API|UI)\\b",
+          "name": "support.constant.channel.e2e"
+        }
+      ]
+    },
+    "string": {
+      "patterns": [
+        {
+          "begin": "\"",
+          "end": "\"|$",
+          "name": "string.quoted.double.e2e",
+          "patterns": [
+            {
+              "include": "#variable"
+            },
+            {
+              "include": "#outline-param"
+            }
+          ]
+        }
+      ]
+    },
+    "variable": {
+      "patterns": [
+        {
+          "match": "(\\$\\{)(table)(:)([A-Za-z_][\\w-]*)(?:(\\[)([^\\]]*)(\\]))?(\\})",
+          "captures": {
+            "1": {
+              "name": "punctuation.definition.variable.e2e"
+            },
+            "2": {
+              "name": "storage.type.table.e2e"
+            },
+            "3": {
+              "name": "punctuation.separator.e2e"
+            },
+            "4": {
+              "name": "variable.parameter.table.e2e"
+            },
+            "5": {
+              "name": "punctuation.definition.columns.e2e"
+            },
+            "6": {
+              "name": "variable.other.member.column.e2e"
+            },
+            "7": {
+              "name": "punctuation.definition.columns.e2e"
+            },
+            "8": {
+              "name": "punctuation.definition.variable.e2e"
+            }
+          }
+        },
+        {
+          "match": "(\\$\\{)([A-Za-z_][\\w-]*)(\\})",
+          "captures": {
+            "1": {
+              "name": "punctuation.definition.variable.e2e"
+            },
+            "2": {
+              "name": "variable.parameter.e2e"
+            },
+            "3": {
+              "name": "punctuation.definition.variable.e2e"
+            }
+          }
+        }
+      ]
+    },
+    "outline-param": {
+      "match": "<[^>\\s]+>",
+      "name": "variable.other.outline.e2e"
+    },
+    "number": {
+      "match": "(?<![\\w@.-])\\d+(?:\\.\\d+)?(?![\\w@.-])",
+      "name": "constant.numeric.e2e"
+    },
+    "table": {
+      "begin": "^\\s*(?=\\|)",
+      "end": "$",
+      "patterns": [
+        {
+          "match": "\\|",
+          "name": "punctuation.separator.table.e2e keyword.operator.table.e2e"
+        },
+        {
+          "include": "#variable"
+        },
+        {
+          "include": "#outline-param"
+        },
+        {
+          "match": "[^|]+",
+          "name": "string.unquoted.cell.e2e"
+        }
+      ]
+    },
+    "docstring": {
+      "begin": "^\\s*(\"\"\"|```)",
+      "end": "^\\s*\\1",
+      "name": "string.quoted.docstring.e2e"
+    },
+    "global": {
+      "begin": "^\\s*(@global)\\b",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.control.global.e2e"
+        }
+      },
+      "end": "(?=^\\s*@global\\b)",
+      "contentName": "markup.italic.global.e2e string.unquoted.global.e2e",
+      "patterns": [
+        {
+          "match": "^\\s*#.*$",
+          "name": "comment.line.number-sign.e2e"
+        },
+        {
+          "match": "\"[^\"]*\"",
+          "name": "string.quoted.double.e2e"
+        }
+      ]
+    }
+  }
+}
