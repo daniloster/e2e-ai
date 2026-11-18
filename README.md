@@ -165,6 +165,9 @@ changes one scenario).
 also planned the `@global` rule (≈ 19 s, once per run) as *when "Help us improve Pocket Notes" → tap
 No thanks*; on Android it dismissed the consent sheet of the freshly cleared app.
 
+The full reports (comparison pages, every model's run with step screenshots) are archived in
+[`e2e/reports/examples/`](e2e/reports/examples/).
+
 **What the numbers say**
 
 - All three fit a standard CI runner with room to spare (≤ 6.6 GB container peak in 16 GB).
