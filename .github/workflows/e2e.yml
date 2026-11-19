@@ -1,0 +1,227 @@
+# End-to-end tests on every pull request (and branch push): web (Playwright), Android and iOS (Appium).
+# Every job replays the reviewed plans in e2e/.plans/plans.json (--replay): no model runs in CI, and a
+# step without a committed plan fails. Generate plans locally (`npm run e2e:ai -- run --target <t>`)
+# and commit them with the change. Reports, screenshots and videos are uploaded as artifacts.
+name: e2e
+
+on:
+  pull_request:
+  # Branch pushes too, so a branch has results before its PR is opened. A PR's run and its branch's
+  # push run share one concurrency group: the newer one cancels the older, so each commit runs once.
+  push:
+    branches-ignore: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: e2e-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  APPIUM_VERSION: 4.0.0
+  UIAUTOMATOR2_VERSION: 9.2.2
+  XCUITEST_VERSION: 13.1.3
+  ARTIFACT_RETENTION_DAYS: 14
+
+jobs:
+  web:
+    name: web (Playwright)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+
+      - name: Start the fixture API and the web app
+        run: |
+          mkdir -p e2e/reports/runs/logs
+          nohup npm run api > e2e/reports/runs/logs/api.log 2>&1 &
+          nohup npm run notes:web > e2e/reports/runs/logs/web.log 2>&1 &
+          scripts/ci/wait-for.sh http://127.0.0.1:4010/health
+          scripts/ci/wait-for.sh http://localhost:5180/app.html
+
+      - name: e2e-ai (web driver)
+        id: e2e_ai
+        continue-on-error: true
+        run: node packages/e2e-ai-cli/src/cli.ts run --target web --replay --no-ai-report
+
+      - name: Playwright Test
+        id: playwright_test
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        env:
+          E2E_REPLAY: '1'
+        run: npx playwright test -c e2e/playwright
+
+      - name: Upload reports, screenshots and videos
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-web
+          path: e2e/reports/runs/
+          retention-days: ${{ env.ARTIFACT_RETENTION_DAYS }}
+          if-no-files-found: warn
+
+      - name: Result
+        if: ${{ !cancelled() }}
+        run: |
+          echo "e2e-ai: ${{ steps.e2e_ai.outcome }}, Playwright Test: ${{ steps.playwright_test.outcome }}"
+          test "${{ steps.e2e_ai.outcome }}" = success && test "${{ steps.playwright_test.outcome }}" = success
+
+  android:
+    name: android (Appium)
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+      - name: Enable KVM (hardware acceleration for the emulator)
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            apps/mobile/package-lock.json
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+      - run: npm ci
+      - run: npm ci
+        working-directory: apps/mobile
+
+      # The e2e build type: JS bundled (no Metro), e2e hooks on, its own app id (com.pocketnotes.e2e).
+      # The emulator reaches the host's fixture API and the runner's bridge at 10.0.2.2.
+      - name: Build the e2e APK
+        working-directory: apps/mobile
+        env:
+          E2E_API_URL: http://10.0.2.2:4010
+          E2E_BRIDGE_URL: ws://10.0.2.2:4011
+        run: npm run android:build:e2e
+
+      - name: Install Appium
+        run: |
+          npm install -g appium@${APPIUM_VERSION}
+          appium driver install uiautomator2@${UIAUTOMATOR2_VERSION}
+
+      - name: Start the fixture API and Appium
+        run: |
+          mkdir -p e2e/reports/runs/logs
+          nohup npm run api > e2e/reports/runs/logs/api.log 2>&1 &
+          nohup appium --port 4723 --relaxed-security > e2e/reports/runs/logs/appium.log 2>&1 &
+          scripts/ci/wait-for.sh http://127.0.0.1:4010/health
+          scripts/ci/wait-for.sh http://127.0.0.1:4723/status
+
+      - name: e2e-ai (Android emulator, Appium)
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot
+          script: bash scripts/ci/android-e2e.sh
+
+      - name: Upload reports, screenshots and videos
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-android
+          path: e2e/reports/runs/
+          retention-days: ${{ env.ARTIFACT_RETENTION_DAYS }}
+          if-no-files-found: warn
+
+  ios:
+    name: ios (Appium)
+    runs-on: macos-26
+    timeout-minutes: 100
+    steps:
+      - uses: actions/checkout@v4
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            apps/mobile/package-lock.json
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+          bundler-cache: true
+          working-directory: apps/mobile
+      - run: npm ci
+      - run: npm ci
+        working-directory: apps/mobile
+
+      - uses: actions/cache@v4
+        with:
+          path: apps/mobile/ios/Pods
+          key: pods-${{ runner.os }}-${{ hashFiles('apps/mobile/ios/Podfile.lock') }}
+      - name: pod install
+        working-directory: apps/mobile/ios
+        run: bundle exec pod install
+
+      # The Debug build (com.pocketnotes.dev) loads its JS from Metro on localhost:8093; the simulator
+      # shares the host's network, so the default API (localhost:4010) and bridge URLs work as they are.
+      - name: Build the app for the simulator
+        working-directory: apps/mobile/ios
+        run: |
+          set -o pipefail
+          xcodebuild -workspace PocketNotes.xcworkspace -scheme PocketNotes -configuration Debug \
+            -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO COMPILER_INDEX_STORE_ENABLE=NO build | tail -n 40
+
+      - name: Boot a simulator and install the app
+        run: |
+          udid=$(scripts/ci/ios-simulator.sh)
+          echo "PN_SIM=$udid" >> "$GITHUB_ENV"
+          xcrun simctl install "$udid" apps/mobile/ios/build/Build/Products/Debug-iphonesimulator/PocketNotes.app
+
+      - name: Install Appium and ffmpeg (screen recording)
+        run: |
+          brew install ffmpeg
+          npm install -g appium@${APPIUM_VERSION}
+          appium driver install xcuitest@${XCUITEST_VERSION}
+
+      - name: Start Metro, the fixture API and Appium
+        run: |
+          mkdir -p e2e/reports/runs/logs
+          (cd apps/mobile && nohup npm start > ../../e2e/reports/runs/logs/metro.log 2>&1 &)
+          nohup npm run api > e2e/reports/runs/logs/api.log 2>&1 &
+          nohup appium --port 4723 --relaxed-security > e2e/reports/runs/logs/appium.log 2>&1 &
+          scripts/ci/wait-for.sh http://127.0.0.1:4010/health
+          scripts/ci/wait-for.sh http://127.0.0.1:4723/status
+          scripts/ci/wait-for.sh http://localhost:8093/status 300
+          # Bundle once before the first launch, so the app does not wait on Metro mid-scenario.
+          curl -sf -o /dev/null --max-time 600 'http://localhost:8093/index.bundle?platform=ios&dev=true&minify=false'
+
+      - name: Build and start WebDriverAgent
+        run: scripts/ci/ios-wda-warmup.sh
+
+      - name: e2e-ai (iOS simulator, Appium)
+        run: node packages/e2e-ai-cli/src/cli.ts run --target ios-appium --replay --no-ai-report
+
+      - name: Upload reports, screenshots and videos
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-ios
+          path: e2e/reports/runs/
+          retention-days: ${{ env.ARTIFACT_RETENTION_DAYS }}
+          if-no-files-found: warn

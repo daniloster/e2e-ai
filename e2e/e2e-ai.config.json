@@ -106,7 +106,8 @@
           "appium:udid": "${PN_SIM:-booted}",
           "appium:bundleId": "com.pocketnotes.dev",
           "appium:noReset": true,
-          "appium:autoDismissAlerts": true
+          "appium:autoDismissAlerts": true,
+          "appium:wdaLaunchTimeout": 600000
         }
       }
     },
@@ -117,13 +118,13 @@
       "driver": {
         "type": "appium",
         "url": "${APPIUM_URL:-http://127.0.0.1:4723}",
-        "appId": "com.pocketnotes.dev",
+        "appId": "${PN_ANDROID_APP_ID:-com.pocketnotes.dev}",
         "scheme": "pocketnotes",
         "resetLink": "e2e-reset",
         "capabilities": {
           "platformName": "Android",
           "appium:automationName": "UiAutomator2",
-          "appium:appPackage": "com.pocketnotes.dev",
+          "appium:appPackage": "${PN_ANDROID_APP_ID:-com.pocketnotes.dev}",
           "appium:appActivity": "com.pocketnotes.MainActivity",
           "appium:noReset": true
         }

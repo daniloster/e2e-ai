@@ -56,13 +56,15 @@ export function createPageDriver(page: Page, opts: { baseUrl: string; startPath?
   };
 }
 
-/** The web target of the config that runs on a cloud (E2E_TARGET picks one by name). */
+/**
+ * The cloud web target named by E2E_TARGET (or `target`). Without a name the browsers are local: a
+ * config that lists cloud targets must not send a plain `playwright test` to a vendor.
+ */
 function cloudTarget(configPath: string, target?: string): { name: string; cloud: CloudConfig } | undefined {
-  const cfg = loadConfig(configPath);
   const want = target ?? process.env.E2E_TARGET;
-  const entries = Object.entries(cfg.targets).filter(([n, t]) => t.platform === 'web' && t.cloud && (!want || n === want));
-  const [name, t] = entries[0] ?? [];
-  return name && t?.cloud ? { name, cloud: t.cloud } : undefined;
+  if (!want) return undefined;
+  const t = loadConfig(configPath).targets[want];
+  return t?.platform === 'web' && t.cloud ? { name: want, cloud: t.cloud } : undefined;
 }
 
 /**
@@ -112,7 +114,8 @@ export function defineFeatureTests(test: TestType<any, any>, opts: FeatureTestOp
   });
   const routines = loadRoutines(cfg.routines);
   const routes = buildCatalog(context).routes;
-  const webTarget = Object.values(cfg.targets).find((t) => t.platform === 'web');
+  const named = process.env.E2E_TARGET ? cfg.targets[process.env.E2E_TARGET] : undefined;
+  const webTarget = named?.platform === 'web' ? named : Object.values(cfg.targets).find((t) => t.platform === 'web');
   const d = webTarget?.driver as { baseUrl?: string; startPath?: string } | undefined;
   const baseUrl = opts.baseUrl ?? process.env.E2E_BASE_URL ?? d?.baseUrl ?? 'http://localhost:5180';
   const startPath = opts.startPath ?? d?.startPath ?? '/';

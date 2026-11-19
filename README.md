@@ -239,3 +239,20 @@ npm run lint && npm run typecheck && npm test
 npm run api & npm run notes:web &                 # fixture API :4010, web app :5180/app.html
 npx e2e-ai run --target web-playwright-mcp        # or android-appium, ios, ios-appium, …
 ```
+
+### CI (GitHub Actions)
+
+`.github/workflows/e2e.yml` runs the suite on every pull request (and every push to a branch other than
+`main`, so a branch has results before its PR), replaying the reviewed plans
+(`--replay`, no model in CI):
+
+| Job | Runner | What runs |
+|---|---|---|
+| web (Playwright) | `ubuntu-latest` | `e2e-ai run --target web` and Playwright Test (`e2e/playwright`) against the web app |
+| android (Appium) | `ubuntu-latest` + Android 15 emulator (KVM) | the `e2e` build type (JS bundled) through Appium UiAutomator2 (`--target android-appium`, `PN_ANDROID_APP_ID=com.pocketnotes.e2e`) |
+| ios (Appium) | `macos-26` + iPhone simulator | the Debug build with Metro through Appium XCUITest (`--target ios-appium`) |
+
+Each job uploads `e2e/reports/runs/` as an artifact (`e2e-web`, `e2e-android`, `e2e-ios`): the HTML
+reports, a screenshot per step, a video per scenario, and the API/Appium/Metro logs. A step whose plan
+is not committed fails the job; plan it locally (`npx e2e-ai run --target <t>`) and commit
+`e2e/.plans/plans.json` with the change. The helper scripts are in `scripts/ci/`.
