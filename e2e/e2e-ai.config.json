@@ -107,6 +107,7 @@
           "appium:bundleId": "com.pocketnotes.dev",
           "appium:noReset": true,
           "appium:autoDismissAlerts": true,
+          "appium:simulatorStartupTimeout": 600000,
           "appium:wdaLaunchTimeout": 600000
         }
       }
