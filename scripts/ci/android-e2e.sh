@@ -5,6 +5,8 @@
 set -euo pipefail
 apk=apps/mobile/android/app/build/outputs/apk/e2e/app-e2e.apk
 adb wait-for-device
+# Tells the workflow the emulator did boot: only a boot that never happened is retried.
+touch "${RUNNER_TEMP:-/tmp}/android-emulator-booted"
 adb install -r "$apk"
 export PN_ANDROID_APP_ID=com.pocketnotes.e2e
 node packages/e2e-ai-cli/src/cli.ts run --target android-appium --replay --no-ai-report

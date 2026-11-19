@@ -127,7 +127,30 @@ jobs:
           scripts/ci/wait-for.sh http://127.0.0.1:4010/health
           scripts/ci/wait-for.sh http://127.0.0.1:4723/status
 
+      # Now and then a runner's emulator never boots (no output, adb never sees it). That case alone is
+      # retried once; a run whose emulator booted is never repeated, so a failing scenario stays failed.
       - name: e2e-ai (Android emulator, Appium)
+        id: emulator
+        continue-on-error: true
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot
+          script: bash scripts/ci/android-e2e.sh
+
+      - name: Did the emulator boot?
+        id: booted
+        if: ${{ steps.emulator.outcome == 'failure' }}
+        run: |
+          if [ -f "$RUNNER_TEMP/android-emulator-booted" ]; then echo "booted=yes" >> "$GITHUB_OUTPUT"; else echo "booted=no" >> "$GITHUB_OUTPUT"; fi
+
+      - name: e2e-ai (Android emulator, Appium) - retry after a failed boot
+        id: emulator_retry
+        if: ${{ steps.emulator.outcome == 'failure' && steps.booted.outputs.booted == 'no' }}
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 35
@@ -146,6 +169,12 @@ jobs:
           path: e2e/reports/runs/
           retention-days: ${{ env.ARTIFACT_RETENTION_DAYS }}
           if-no-files-found: warn
+
+      - name: Result
+        if: ${{ !cancelled() }}
+        run: |
+          echo "e2e-ai: ${{ steps.emulator.outcome }}, retry after a failed boot: ${{ steps.emulator_retry.outcome || 'not needed' }}"
+          test "${{ steps.emulator.outcome }}" = success || test "${{ steps.emulator_retry.outcome }}" = success
 
   ios:
     name: ios (Appium)
