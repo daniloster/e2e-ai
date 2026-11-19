@@ -62,7 +62,7 @@ export interface ReportData {
   generatedAt: string;
   startedAt: string;
   durationMs: number;
-  run: { driver: string; platform: string; model: string | null; mode: 'plan' | 'replay' | 'no-cache'; tags: string | null; command: string };
+  run: { driver: string; platform: string; model: string | null; mode: 'plan' | 'replay' | 'no-cache'; tags: string | null; command: string; links?: { label: string; url: string }[] };
   totals: {
     features: number;
     scenarios: number;
@@ -90,7 +90,7 @@ export interface ReportData {
 
 export function collect(
   reports: ScenarioReport[],
-  meta: { startedAt: Date; driver: string; platform: string; model: string | null; tags: string | null; command: string; llm: LlmStats | null; title?: string; noCache?: boolean },
+  meta: { startedAt: Date; driver: string; platform: string; model: string | null; tags: string | null; command: string; llm: LlmStats | null; title?: string; noCache?: boolean; links?: { label: string; url: string }[] },
 ): ReportData {
   reports.forEach((r, i) => ((r as ScenarioReport & { id?: string }).id = `s${i + 1}`));
   const byFile = new Map<string, ScenarioReport[]>();
@@ -147,7 +147,7 @@ export function collect(
     generatedAt: new Date().toISOString(),
     startedAt: meta.startedAt.toISOString(),
     durationMs: Date.now() - meta.startedAt.getTime(),
-    run: { driver: meta.driver, platform: meta.platform, model: meta.model, mode: meta.noCache ? 'no-cache' : meta.model ? 'plan' : 'replay', tags: meta.tags, command: meta.command },
+    run: { driver: meta.driver, platform: meta.platform, model: meta.model, mode: meta.noCache ? 'no-cache' : meta.model ? 'plan' : 'replay', tags: meta.tags, command: meta.command, ...(meta.links?.length ? { links: meta.links } : {}) },
     totals: {
       features: features.length,
       scenarios: reports.length,

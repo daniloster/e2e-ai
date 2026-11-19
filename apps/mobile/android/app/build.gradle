@@ -113,6 +113,20 @@ android {
             minifyEnabled enableProguardInReleaseBuilds
             proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
         }
+        // The e2e build for device clouds (Sauce Labs, BrowserStack): a release build with the JS bundled
+        // (no Metro) that keeps the e2e hooks. Build with E2E_BUILD=1 (npm run android:build:e2e; README
+        // "Cloud / e2e build"); its own app (com.pocketnotes.e2e, "Pocket Notes E2E") beside the others.
+        // Not in react { debuggableVariants }, so the RN Gradle plugin bundles the JS into the APK.
+        e2e {
+            initWith release
+            matchingFallbacks = ['release']
+            signingConfig signingConfigs.debug
+            applicationIdSuffix ".e2e"
+            // R8 off on purpose: a test build, never shipped to a store (release keeps R8 and its rules).
+            minifyEnabled false
+            // The test API is plain http (fixture API / tunnel); release sets this to false.
+            manifestPlaceholders = [usesCleartextTraffic: "true"]
+        }
     }
 }
 

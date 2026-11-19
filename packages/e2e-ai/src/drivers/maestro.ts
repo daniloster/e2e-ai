@@ -13,6 +13,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { promisify } from 'node:util';
 
+import { androidRole, iosRole } from '../roles.ts';
 import type { Driver, UiElement } from '../types.ts';
 
 const run = promisify(execFile);
@@ -54,15 +55,12 @@ export function parseMaestroHierarchy(json: string): Node[] {
     const cls = a.class ?? a.elementType ?? '';
     const b = bounds(a.bounds);
     const checkable = a.checked !== undefined && a.checkable === 'true';
-    const role = /EditText|TextField|textField/i.test(cls)
-      ? 'textbox'
-      : checkable || /checkbox|switch/i.test(cls)
-        ? 'checkbox'
-        : a.clickable === 'true'
-          ? 'button'
-          : text
-            ? 'text'
-            : '';
+    // Maestro reports Android classes (`class`) or iOS element types (`elementType`, numeric or named).
+    const role = /^XCUIElementType/.test(cls)
+      ? iosRole(cls, a['resource-id'] ?? '') || (a.clickable === 'true' ? 'button' : text ? 'text' : '')
+      : /TextField|textField/.test(cls)
+        ? 'textbox'
+        : androidRole(cls, { clickable: a.clickable === 'true', checkable: checkable || /checkbox|switch/i.test(cls), text });
     if (b && (role || rid) && a.enabled !== 'false') {
       const el: UiElement = { ref: String(out.length), role: role || 'group', name: label || text, text };
       if (rid) el.testId = rid;

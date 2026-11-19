@@ -15,12 +15,26 @@ export interface UiElement {
   checked?: boolean;
 }
 
+export interface RunOutcome {
+  passed: boolean;
+  scenarios: number;
+  failed: number;
+}
+
+export interface DriverLink {
+  label: string;
+  url: string;
+}
+
 /** A UI automation backend (Playwright, the RN bridge, adb/uiautomator, ...). */
 export interface Driver {
   readonly platform: Platform;
   readonly name: string;
   start(): Promise<void>;
-  stop(): Promise<void>;
+  /** Ends the session; `outcome` lets a cloud session be marked passed/failed in the vendor dashboard. */
+  stop(outcome?: RunOutcome): Promise<void>;
+  /** Where to watch this run elsewhere (cloud dashboard, video): shown in the log and the report. */
+  links?(): Promise<DriverLink[]>;
   /** Brings the app to a clean, signed-out start state. */
   resetApp(): Promise<void>;
   /** Opens a named route of the app context (a URL on the web, a deep link or bridge call on mobile). */
@@ -124,6 +138,8 @@ export interface ResolvedTarget {
   testId?: string;
   role: string;
   name: string;
+  /** Count assertions: the repeated group the items matched (e.g. `note-row-*`, or `role:listitem`). */
+  pattern?: string;
 }
 
 export interface StepPlan {

@@ -31,7 +31,11 @@ export { openPlanCache, planKey } from './cache.ts';
 export type { PlanCache } from './cache.ts';
 
 // Running
-export { runScenario, expandRoutines } from './runner.ts';
+export { runScenario, expandRoutines, stepPlanKey, globalPlanKey } from './runner.ts';
+export { appiumHub, apiBase, cloudAppiumCapabilities, credentials, remoteBrowser, sessionStatusScript, sessionUrl, uploadApp, validateCloud, CLOUD_PROVIDERS } from './cloud/cloud.ts';
+export type { CloudConfig, CloudProvider } from './cloud/cloud.ts';
+export { openTunnel, sauceConnectRegion } from './cloud/tunnel.ts';
+export { compileScenario, runMaestroCloud, selector as maestroSelector, readJUnit, CompileError } from './cloud/maestroCloud.ts';
 export type { RunOptions, ScenarioReport, StepReport, GlobalFire } from './runner.ts';
 export { createDriver, withRoutes } from './drivers/index.ts';
 export type { DriverConfig } from './drivers/index.ts';

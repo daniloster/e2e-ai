@@ -8,7 +8,18 @@
         "count": 1
       }
     ],
-    "resolved": {},
+    "resolved": {
+      "mobile:notes in the list#group": {
+        "role": "listitem",
+        "name": "",
+        "pattern": "note-row-*"
+      },
+      "web:notes in the list#group": {
+        "role": "listitem",
+        "name": "",
+        "pattern": "role:listitem"
+      }
+    },
     "model": "qwen3:4b",
     "createdAt": "2026-11-18T20:27:16.798Z"
   },
@@ -465,6 +476,27 @@
     "model": "qwen3:4b",
     "createdAt": "2026-11-18T20:27:09.474Z"
   },
+  "bef3377e8e1b3740": {
+    "step": "do not allow firebase user analytics",
+    "when": [
+      "Help us improve Pocket Notes"
+    ],
+    "actions": [
+      {
+        "kind": "tap",
+        "target": "No thanks button"
+      }
+    ],
+    "resolved": {
+      "mobile:No thanks button": {
+        "testId": "consent-deny",
+        "role": "button",
+        "name": "NO THANKS"
+      }
+    },
+    "model": "qwen3:4b",
+    "createdAt": "2026-11-18T23:50:00.383Z"
+  },
   "c23f37de0310d8f7": {
     "step": "I should see \"No notes yet. Add your first one.\"",
     "actions": [
@@ -561,6 +593,27 @@
     "model": "qwen3:4b",
     "createdAt": "2026-11-18T20:27:24.605Z"
   },
+  "daef259e509eaa5e": {
+    "step": "do not allow firebase user analytics",
+    "when": [
+      "Help us improve Pocket Notes"
+    ],
+    "actions": [
+      {
+        "kind": "tap",
+        "target": "No thanks button"
+      }
+    ],
+    "resolved": {
+      "mobile:No thanks button": {
+        "testId": "consent-deny",
+        "role": "button",
+        "name": "NO THANKS"
+      }
+    },
+    "model": "qwen3:4b",
+    "createdAt": "2026-11-19T00:24:20.497Z"
+  },
   "deaae54b6da9fadd": {
     "step": "I sign in as \"ana@example.com\" with password \"not-it\"",
     "actions": [
@@ -651,7 +704,18 @@
         "count": 2
       }
     ],
-    "resolved": {},
+    "resolved": {
+      "mobile:notes in the list#group": {
+        "role": "listitem",
+        "name": "",
+        "pattern": "note-row-*"
+      },
+      "web:notes in the list#group": {
+        "role": "listitem",
+        "name": "",
+        "pattern": "role:listitem"
+      }
+    },
     "model": "qwen3:4b",
     "createdAt": "2026-11-18T20:27:21.475Z"
   },
@@ -664,7 +728,18 @@
         "count": 3
       }
     ],
-    "resolved": {},
+    "resolved": {
+      "mobile:notes in the list#group": {
+        "role": "listitem",
+        "name": "",
+        "pattern": "note-row-*"
+      },
+      "web:notes in the list#group": {
+        "role": "listitem",
+        "name": "",
+        "pattern": "role:listitem"
+      }
+    },
     "model": "qwen3:4b",
     "createdAt": "2026-11-18T20:27:02.273Z"
   },

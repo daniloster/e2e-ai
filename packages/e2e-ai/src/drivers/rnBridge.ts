@@ -27,13 +27,20 @@ interface Pending {
   reject(e: Error): void;
 }
 
-export function createRnBridgeDriver(opts: RnBridgeOptions = {}): Driver {
+export type RnBridgeDriver = Driver & {
+  /** Resolves once the app's connection has been the same for `quietMs` (an app relaunched right
+   * after start — e.g. by a cloud's Appium — reconnects, and commands must reach the new one). */
+  settle(quietMs?: number, timeoutMs?: number): Promise<void>;
+};
+
+export function createRnBridgeDriver(opts: RnBridgeOptions = {}): RnBridgeDriver {
   const port = opts.port ?? 4011;
   let wss: WebSocketServer | undefined;
   let socket: WebSocket | undefined;
   let seq = 0;
   const pending = new Map<number, Pending>();
   let waiters: Array<(s: WebSocket) => void> = [];
+  let connectedAt = 0;
   let recorder: { proc: ReturnType<typeof spawn>; file: string; remote?: string; adbArgs?: string[] } | undefined;
 
   const connected = (timeoutMs: number): Promise<WebSocket> =>
@@ -72,10 +79,21 @@ export function createRnBridgeDriver(opts: RnBridgeOptions = {}): Driver {
   return {
     platform: 'mobile',
     name: 'rn-bridge',
+    async settle(quietMs = 3000, timeoutMs = 60_000) {
+      const end = Date.now() + timeoutMs;
+      for (;;) {
+        await connected(Math.max(1, end - Date.now()));
+        const quiet = Date.now() - connectedAt;
+        if (quiet >= quietMs && socket?.readyState === socket?.OPEN) return;
+        if (Date.now() > end) throw new Error(`the app's bridge connection did not settle in ${timeoutMs / 1000}s`);
+        await new Promise((r) => setTimeout(r, Math.max(100, quietMs - quiet)));
+      }
+    },
     async start() {
       wss = new WebSocketServer({ port, host: '0.0.0.0' });
       wss.on('connection', (ws) => {
         socket = ws;
+        connectedAt = Date.now();
         ws.on('message', (raw) => {
           const msg = JSON.parse(String(raw)) as { id: number; ok: boolean; result?: unknown; error?: string };
           const p = pending.get(msg.id);
@@ -103,7 +121,16 @@ export function createRnBridgeDriver(opts: RnBridgeOptions = {}): Driver {
       await new Promise<void>((r) => (wss ? wss.close(() => r()) : r()));
     },
     async resetApp() {
-      await call('reset');
+      // Older app builds answer "app not ready" until their handlers are registered after launch.
+      for (let i = 0; ; i++) {
+        try {
+          await call('reset');
+          return;
+        } catch (e) {
+          if (i >= 30 || !(e instanceof Error) || !/app not ready/.test(e.message)) throw e;
+          await new Promise((r) => setTimeout(r, 500));
+        }
+      }
     },
     async openRoute(route, params) {
       await call('openRoute', { route, params: params ?? {} });

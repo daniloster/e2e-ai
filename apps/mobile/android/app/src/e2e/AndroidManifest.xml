@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- E2E build only (buildType e2e, README "Cloud / e2e build"): the same e2e deep links as the debug
+     build, for black-box drivers on device clouds (Appium, Maestro, adb):
+     pocketnotes://signin, pocketnotes://notes?session=<token>, pocketnotes://e2e-reset.
+     Merged into the main manifest's MainActivity; never part of a release build. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+  <application>
+    <activity android:name=".MainActivity" tools:node="merge">
+      <intent-filter>
+        <action android:name="android.intent.action.VIEW" />
+        <category android:name="android.intent.category.DEFAULT" />
+        <category android:name="android.intent.category.BROWSABLE" />
+        <data android:scheme="pocketnotes" android:host="signin" />
+        <data android:scheme="pocketnotes" android:host="notes" />
+        <data android:scheme="pocketnotes" android:host="e2e-reset" />
+      </intent-filter>
+    </activity>
+  </application>
+</manifest>

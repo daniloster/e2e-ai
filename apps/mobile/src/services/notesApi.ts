@@ -1,5 +1,6 @@
 // The notes API facade: the fixture API (apps-modules/fixture-api) on the dev machine. The iOS simulator
-// shares the Mac's network; Android reaches it through `adb reverse tcp:4010 tcp:4010`.
+// shares the Mac's network; Android reaches it through `adb reverse tcp:4010 tcp:4010`. The URL is
+// E2E_API_URL at build time (default http://localhost:4010; README "Cloud / e2e build").
 export interface Note {
   id: string;
   title: string;
@@ -7,7 +8,7 @@ export interface Note {
   done: boolean;
 }
 
-export const NOTES_API_URL = 'http://localhost:4010';
+export const NOTES_API_URL: string = __E2E_API_URL__;
 
 async function call<T>(
   method: string,

@@ -1,5 +1,5 @@
 {
-  "_comment": "PLACEHOLDER: replace with google-services.json from the Firebase console (project pocket-notes, Android apps com.pocketnotes and com.pocketnotes.dev for debug builds) and keep a copy in config/android/ (see config/README.md).",
+  "_comment": "PLACEHOLDER: replace with google-services.json from the Firebase console (project pocket-notes, Android apps com.pocketnotes and com.pocketnotes.dev for debug builds, com.pocketnotes.e2e for the e2e build) and keep a copy in config/android/ (see config/README.md).",
   "project_info": {
     "project_number": "000000000000",
     "project_id": "REPLACE_ME",
@@ -30,6 +30,25 @@
         "mobilesdk_app_id": "1:000000000000:android:0000000000000000000000",
         "android_client_info": {
           "package_name": "com.pocketnotes.dev"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "APLACEHOLDER000000000000000000000000000"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:000000000000:android:0000000000000000000000",
+        "android_client_info": {
+          "package_name": "com.pocketnotes.e2e"
         }
       },
       "oauth_client": [],

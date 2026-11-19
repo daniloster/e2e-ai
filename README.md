@@ -69,6 +69,12 @@ Feature: Notes
 | `routines/*.routine` | `Routine: <signature with ${params} and ${table:name[cols]}>` + plain steps, nested calls, `each` loops |
 | `features/global.feature` | `@global <rule>` standing rules — e.g. `@global do not allow firebase user analytics`. Planned once into *when these texts are on screen* → *tap/fill*; checked on every screen read for every scenario |
 
+Modals, bottom sheets, alerts and OS permission prompts are read as `dialog`/`alert` elements named
+by their title on every platform, so steps and `@global` rules can act on them
+(`@global allow notifications when asked`); custom components get roles in the config
+(`"ui": { "roles": { "android": { "com.acme.PrimaryButton": "button" } } }`) — see
+[§5c](e2e/README.md).
+
 Full reference: [`e2e/README.md`](e2e/README.md).
 
 ## CLI
@@ -112,15 +118,26 @@ implement `tap`, `fill`, `openRoute`).
 | Playwright Test (`e2e-ai playwright init`) | web | ✅ 11/11 |
 | `mcp` (any MCP server exposing `ui_*` tools; bundled `web-mcp`, `rn-mcp`) | web, iOS, Android | ✅ web, iOS |
 | `appium` (W3C WebDriver: UiAutomator2 / XCUITest) | Android, iOS | ✅ Android (benchmark below), iOS 11/11 |
+| any of the above on Sauce Labs / BrowserStack | via `cloud` | see below |
 | `rn-bridge` (in-app debug bridge, gray-box) | iOS, Android | ✅ iOS |
 | `maestro` (Maestro CLI) | Android, iOS | ⚠️ implemented and unit-tested, not run on a device |
 
-**Sauce Labs / BrowserStack:** not supported yet. For mobile they are Appium hubs, so the `appium`
-driver can be pointed at their URL with their capabilities, but that is untested and needs a tunnel
-(Sauce Connect / BrowserStack Local) for the test-data API and the app's dev server, an uploaded build
-(`appium:app`), and a check that each vendor supports `mobile: deepLink` and the screen-recording
-endpoints. For web, `playwright-mcp` launches a local browser; a cloud browser needs a
-connect-to-remote-endpoint option that the driver does not have yet.
+**Sauce Labs and BrowserStack:** any target can run on either cloud by adding a `cloud` block
+(credentials from `SAUCE_*` / `BROWSERSTACK_*` environment variables; the app build is uploaded; a
+tunnel — Sauce Connect / BrowserStack Local — is opened for the run; the vendor session is linked
+from the report and marked passed/failed):
+
+| Integration | On Sauce Labs / BrowserStack | Checked here |
+|---|---|---|
+| `appium` | the vendor's Appium hub | ✅ 11/11 on each, through local stand-ins of both vendors (`npm run e2e:cloud:check`) |
+| `rn-bridge` (our native driver) | the vendor's Appium hosts the app, our in-app bridge drives it | ✅ 11/11 (stand-in) |
+| `mcp` web (our Playwright driver), Playwright Test | BrowserStack: remote Playwright; Sauce: Playwright via Selenium Grid | ✅ 11/11 each (Playwright run-server; a Grid-style hub) |
+| `playwright-mcp` | BrowserStack: `browser.remoteEndpoint`; Sauce: Selenium Grid variables | ✅ 11/11 each (stand-ins) |
+| `maestro` | each scenario compiled into one Maestro flow from the reviewed plans, run by maestro-runner on the vendor hub (or BrowserStack's Maestro API) | ⚠️ flows compiled for all 11 scenarios; not executed (maestro-runner not installable here) |
+
+None of this has run against the real vendors yet (no accounts in this environment): set the
+credentials and run e.g. `npx e2e-ai run --target android-appium-browserstack`. Details:
+[e2e/README.md §5b](e2e/README.md).
 
 ---
 

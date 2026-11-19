@@ -18,6 +18,7 @@ import * as identity from '../services/identity';
 import { me } from '../services/notesApi';
 import * as storage from '../services/storage';
 import { registerE2EHandlers } from '../testing/e2eBridge';
+import { E2E_HOOKS } from '../testing/e2eHooks';
 import { openDevRoute } from './devRoutes';
 import { createT, deviceLocale } from './i18n';
 import type { TFunction } from './i18n';
@@ -185,9 +186,10 @@ export function AppProvider(props: {
   const tRef = useRef(t);
   tRef.current = t;
 
-  // Debug builds: the e2e routes of docs/app-guide.md. The in-app bridge calls them directly; black-box
-  // drivers (Appium, Maestro, adb) open them as deep links: pocketnotes://signin,
-  // pocketnotes://notes?session=<token>, pocketnotes://e2e-reset. Never active in release builds.
+  // Debug and e2e builds (E2E_HOOKS): the e2e routes of docs/app-guide.md. The in-app bridge calls
+  // them directly; black-box drivers (Appium, Maestro, adb) open them as deep links:
+  // pocketnotes://signin, pocketnotes://notes?session=<token>, pocketnotes://e2e-reset. Never active
+  // in release builds without E2E_BUILD=1.
   const e2eOpenRoute = useCallback(
     async (route: string, params: Record<string, string>) => {
       if (route === 'e2e-reset') {
@@ -214,7 +216,7 @@ export function AppProvider(props: {
   // A share link: decode it and start that board; tell the player when it cannot be opened.
   const openLink = useCallback(
     (url: string) => {
-      if (__DEV__) {
+      if (E2E_HOOKS) {
         const m = /^pocketnotes:\/\/(e2e-reset|signin|notes|home|settings)\/?(?:\?(.*))?$/.exec(url);
         if (m) {
           const params = Object.fromEntries(new URLSearchParams(m[2] ?? ''));
@@ -282,14 +284,16 @@ export function AppProvider(props: {
     };
   }, [state.hydrated, services, openLink]);
 
-  // Debug builds: the in-app e2e bridge (gray-box driver) uses the same routes.
+  // Debug and e2e builds: the in-app e2e bridge (gray-box driver) uses the same routes.
+  // Registered once storage is read: a route opened while the app is still starting would be lost
+  // (the bridge waits for these handlers, so commands sent early simply wait).
   useEffect(() => {
-    if (!__DEV__) return;
+    if (!E2E_HOOKS || !state.hydrated) return;
     return registerE2EHandlers({
       reset: () => dispatch({ type: 'E2E_RESET' }),
       openRoute: e2eOpenRoute,
     });
-  }, [dispatch, e2eOpenRoute]);
+  }, [dispatch, e2eOpenRoute, state.hydrated]);
 
   const value = useMemo(
     () => ({ state, dispatch, t, services }),

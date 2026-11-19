@@ -19,6 +19,10 @@ Use only the CLI and the plain-text files; never write TypeScript glue.
    `e2e/reports/runs/<run>/index.html` and the plan diff in `e2e/.plans/plans.json`.
 6. When a step is planned wrongly, fix the docs (screens/glossary/examples), not the plan file.
 7. CI: `npx e2e-ai run --target <name> --replay --junit <file> [--shard i/n]`.
+8. Device/browser clouds: add a `cloud` block to a target (`e2e/README.md` §5b) or run
+   `npx e2e-ai init --cloud saucelabs,browserstack`; credentials only from environment variables.
+9. Custom components, modals, permission prompts: `e2e/README.md` §5c (`ui.roles`, `systemAlerts`,
+   `@global` rules).
 
 Command reference: [`packages/e2e-ai-cli/README.md`](packages/e2e-ai-cli/README.md) or `npx e2e-ai --help`.
 

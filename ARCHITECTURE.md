@@ -46,6 +46,13 @@ results ──report.ts / benchmark.ts──► report.json + HTML templates (vi
 - **Integrations** (`drivers/index.ts`): `mcp` (any server with the `ui_*` tools; ours: `web-mcp`,
   `rn-mcp`), `playwright-mcp`, `appium`, `maestro`, `rn-bridge`; Playwright Test via `playwright.ts`.
   All return the same `UiElement` page source; route names resolve to URLs or deep links per platform.
+- **Roles** (`roles.ts`): one role vocabulary for every platform (iOS types, Android classes, Maestro,
+  HTML/ARIA), overlays (alerts, dialogs, permission prompts, sheets) as named elements, config
+  overrides (`ui.roles`), and the OS prompt texts the `@global` planner may use.
+- **Clouds** (`cloud/`): `cloud.ts` (credentials, hubs, uploads, capabilities, remote browsers,
+  session status/links), `tunnel.ts` (Sauce Connect, BrowserStack Local), `maestroCloud.ts` (scenarios
+  compiled into Maestro flows), `fakeCloud.ts` (local stand-in for both vendors, dev/test only;
+  `npm run e2e:cloud:check`). Credentials never reach logs, reports or caps files.
 - **The model never judges results**: assertions are deterministic; plan repair excludes assertions;
   report prose is verified against the run data.
 
@@ -67,8 +74,8 @@ results ──report.ts / benchmark.ts──► report.json + HTML templates (vi
 
 ## 5. Demo app (Pocket Notes)
 
-- `apps/web/app.html` (notes app), `apps/mobile` (React Native, debug build carries the e2e bridge and
-  the e2e deep links), `apps-modules/fixture-api` (in-memory API with `/__test/*` seeding).
+- `apps/web/app.html` (notes app), `apps/mobile` (React Native, debug and e2e builds carry the e2e
+  bridge and the e2e deep links; the e2e build bundles its JS for device clouds), `apps-modules/fixture-api` (in-memory API with `/__test/*` seeding).
 - `apps-modules/core` stays pure and deterministic (lint-enforced); copy comes from
   `apps-modules/i18n` (en-GB source, es and pt-BR with identical keys).
 - Same `testID`s on web and mobile so one plan replays on both.

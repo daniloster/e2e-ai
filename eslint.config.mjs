@@ -77,6 +77,8 @@ export default tseslint.config(
       '**/vite.config.ts',
       '**/vitest.workspace.ts',
       '**/playwright.config.ts',
+      'packages/e2e-ai/src/playwrightGlobalSetup.ts', // Playwright's globalSetup contract
+      '**/playwright/global-setup.ts',
       'apps/mobile/index.js',
       'eslint.config.mjs',
     ],

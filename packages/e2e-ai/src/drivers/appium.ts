@@ -11,7 +11,10 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 
-import type { Driver, UiElement } from '../types.ts';
+import { appiumHub, cloudAppiumCapabilities, redact, sessionPublicUrl, sessionStatusScript, uploadApp, validateCloud, type CloudConfig } from '../cloud/cloud.ts';
+import { openTunnel, type Tunnel } from '../cloud/tunnel.ts';
+import { iosRole, OVERLAY_ROLES } from '../roles.ts';
+import type { Driver, DriverLink, UiElement } from '../types.ts';
 import { parseUiAutomator } from './adb.ts';
 
 export interface AppiumOptions {
@@ -22,6 +25,16 @@ export interface AppiumOptions {
   resetLink?: string; // route opened after relaunch, e.g. "e2e-reset"
   readyTimeoutMs?: number; // how long resetApp waits for the relaunched app's screen to settle (45 s)
   capabilities: Record<string, unknown>;
+  /** Run on Sauce Labs / BrowserStack: the vendor hub replaces `url`, the build is uploaded, a tunnel opened. */
+  cloud?: CloudConfig;
+  /** Session name shown in the cloud dashboard. */
+  sessionName?: string;
+  /**
+   * OS alerts over the app (permission prompts, "Save Password?"): `dismiss` them before each screen
+   * read (default), `accept` them, or `leave` them on screen as an `alert` element so steps and
+   * @global rules decide ("@global allow notifications when asked").
+   */
+  systemAlerts?: 'dismiss' | 'accept' | 'leave';
 }
 
 interface Node {
@@ -38,18 +51,6 @@ const attr = (s: string, name: string): string =>
     .replace(/&gt;/g, '>')
     .replace(/&#10;/g, ' ');
 
-const IOS_ROLE: Record<string, string> = {
-  XCUIElementTypeButton: 'button',
-  XCUIElementTypeLink: 'link',
-  XCUIElementTypeTextField: 'textbox',
-  XCUIElementTypeSecureTextField: 'textbox',
-  XCUIElementTypeTextView: 'textbox',
-  XCUIElementTypeSearchField: 'textbox',
-  XCUIElementTypeStaticText: 'text',
-  XCUIElementTypeSwitch: 'checkbox',
-  XCUIElementTypeCheckBox: 'checkbox',
-  XCUIElementTypeCell: 'listitem',
-};
 
 /** Parses an XCUITest page source into UiElements with tap centres. Exported for tests. */
 export function parseXcuiSource(xml: string): Node[] {
@@ -61,7 +62,7 @@ export function parseXcuiSource(xml: string): Node[] {
     const name = attr(tag, 'name');
     const label = attr(tag, 'label');
     const value = attr(tag, 'value');
-    let role = IOS_ROLE[type] ?? '';
+    let role = iosRole(type, attr(tag, 'name'));
     if (/checkbox/i.test(attr(tag, 'traits')) || (type === 'XCUIElementTypeButton' && /^(0|1|checked|unchecked)$/.test(value))) role = role || 'checkbox';
     // Other containers are kept only when they carry a test id (RN Views with testID).
     const testId = name && name !== label ? name : '';
@@ -70,7 +71,8 @@ export function parseXcuiSource(xml: string): Node[] {
     const y = Number(attr(tag, 'y'));
     const w = Number(attr(tag, 'width'));
     const h = Number(attr(tag, 'height'));
-    const el: UiElement = { ref: String(out.length), role: role || 'group', name: label || name, text: role === 'textbox' ? '' : label || value };
+    // Alerts, sheets and popovers carry their title as label; their message is a StaticText inside.
+    const el: UiElement = { ref: String(out.length), role: role || 'group', name: label || name, text: role === 'textbox' || OVERLAY_ROLES.has(role) ? (OVERLAY_ROLES.has(role) ? label : '') : label || value };
     if (testId) el.testId = testId;
     if (role === 'textbox') el.value = value;
     if (role === 'checkbox') el.checked = value === '1' || value === 'checked';
@@ -92,7 +94,10 @@ export function xpathLiteral(v: string): string {
 export function createAppiumDriver(opts: AppiumOptions): Driver {
   let session: string | undefined;
   let last: Node[] = [];
-  const base = opts.url.replace(/\/$/, '');
+  if (opts.cloud) validateCloud(opts.cloud);
+  const base = (opts.cloud ? appiumHub(opts.cloud) : opts.url).replace(/\/$/, '');
+  let tunnel: Tunnel | undefined;
+  let cloudLink: string | undefined;
   async function wd<T = unknown>(method: string, path: string, body?: unknown): Promise<T> {
     const res = await fetch(`${base}${path}`, {
       method,
@@ -101,7 +106,10 @@ export function createAppiumDriver(opts: AppiumOptions): Driver {
     });
     const json = (await res.json().catch(() => ({}))) as { value?: unknown };
     const v = json.value as { error?: string; message?: string } | undefined;
-    if (!res.ok || (v && typeof v === 'object' && 'error' in v)) throw new Error(`appium ${method} ${path}: ${v?.message ?? res.status}`);
+    if (!res.ok || (v && typeof v === 'object' && 'error' in v)) {
+      const msg = `appium ${method} ${path}: ${v?.message ?? res.status}`;
+      throw new Error(opts.cloud?.accessKey ? redact(msg, { username: '', accessKey: opts.cloud.accessKey }) : msg);
+    }
     return json.value as T;
   }
   const s = (p: string) => {
@@ -167,12 +175,40 @@ export function createAppiumDriver(opts: AppiumOptions): Driver {
     platform: 'mobile',
     name: `appium-${opts.os}`,
     async start() {
-      const r = await wd<{ sessionId: string }>('POST', '/session', { capabilities: { alwaysMatch: opts.capabilities, firstMatch: [{}] } });
-      session = r.sessionId;
+      let caps = opts.capabilities;
+      if (opts.cloud) {
+        const c = opts.cloud;
+        if (!c.app) throw new Error(`${c.provider}: cloud.app is required (a build to upload, or storage:… / bs://…)`);
+        const app = await uploadApp(c, c.app);
+        tunnel = await openTunnel(c);
+        caps = cloudAppiumCapabilities(c, caps, {
+          app,
+          ...(tunnel ? { tunnelName: tunnel.name } : {}),
+          ...(opts.sessionName ? { sessionName: opts.sessionName } : {}),
+        });
+      }
+      try {
+        const r = await wd<{ sessionId: string }>('POST', '/session', { capabilities: { alwaysMatch: caps, firstMatch: [{}] } });
+        session = r.sessionId;
+      } catch (e) {
+        await tunnel?.stop();
+        tunnel = undefined;
+        throw e;
+      }
+      if (opts.cloud) cloudLink = await sessionPublicUrl(opts.cloud, session);
     },
-    async stop() {
+    async stop(outcome) {
+      if (session && opts.cloud && outcome) {
+        const reason = `${outcome.scenarios - outcome.failed}/${outcome.scenarios} scenarios passed`;
+        await exec(sessionStatusScript(opts.cloud, outcome.passed, reason)).catch(() => undefined);
+      }
       if (session) await wd('DELETE', s('')).catch(() => undefined);
       session = undefined;
+      await tunnel?.stop();
+      tunnel = undefined;
+    },
+    async links(): Promise<DriverLink[]> {
+      return cloudLink && opts.cloud ? [{ label: `${opts.cloud.provider} session (video, logs)`, url: cloudLink }] : [];
     },
     async resetApp() {
       await exec('mobile: terminateApp', appArg()).catch(() => undefined);
@@ -190,17 +226,26 @@ export function createAppiumDriver(opts: AppiumOptions): Driver {
     },
     async navigate(target) {
       const url = /^[a-z][\w+.-]*:\/\//i.test(target) ? target : `${opts.scheme}://${target}`;
-      await exec('mobile: deepLink', opts.os === 'ios' ? { url, bundleId: opts.appId } : { url, package: opts.appId });
+      try {
+        await exec('mobile: deepLink', opts.os === 'ios' ? { url, bundleId: opts.appId } : { url, package: opts.appId });
+      } catch (e) {
+        // Some clouds do not expose `mobile: deepLink`; WebDriver's navigate opens the URL through the OS.
+        if (!opts.cloud) throw e;
+        await wd('POST', s('/url'), { url });
+      }
     },
     async snapshot() {
       // System sheets ("Save Password?", permission prompts) cover the app; a real user would close
       // them, so the driver does too before reading the screen (found on iOS after a sign-in).
-      try {
-        await wd('GET', s('/alert/text'));
-        await wd('POST', s('/alert/dismiss'), {});
-        await new Promise((r) => setTimeout(r, 300));
-      } catch {
-        // no alert
+      const mode = opts.systemAlerts ?? 'dismiss';
+      if (mode !== 'leave') {
+        try {
+          await wd('GET', s('/alert/text'));
+          await wd('POST', s(mode === 'accept' ? '/alert/accept' : '/alert/dismiss'), {});
+          await new Promise((r) => setTimeout(r, 300));
+        } catch {
+          // no alert
+        }
       }
       const xml = await wd<string>('GET', s('/source'));
       last = opts.os === 'ios' ? parseXcuiSource(xml) : parseUiAutomator(xml);
@@ -238,5 +283,11 @@ export function createAppiumDriver(opts: AppiumOptions): Driver {
       return file;
     },
   };
+  if (opts.cloud) {
+    // The vendor records the whole session (linked from the report); its Appium recording endpoints
+    // are not available everywhere.
+    delete driver.startRecording;
+    delete driver.stopRecording;
+  }
   return driver;
 }

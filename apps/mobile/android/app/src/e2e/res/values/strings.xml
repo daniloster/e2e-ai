@@ -1,0 +1,4 @@
+<resources>
+    <!-- The e2e build is its own app (com.pocketnotes.e2e) beside the release and debug builds. -->
+    <string name="app_name">Pocket Notes E2E</string>
+</resources>

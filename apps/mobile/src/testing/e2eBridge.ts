@@ -1,5 +1,5 @@
-// Debug builds only: the @pn/e2e-ai "rn-bridge" driver's in-app half. Connects to the runner's
-// WebSocket (ws://localhost:4011), answers `snapshot` from the React fiber tree (testID, role,
+// Debug and e2e builds only (E2E_HOOKS): the @pn/e2e-ai "rn-bridge" driver's in-app half. Connects to
+// the runner's WebSocket (E2E_BRIDGE_URL at build time, default ws://localhost:4011), answers `snapshot` from the React fiber tree (testID, role,
 // accessibility label, text), and performs `tap` / `fill` by invoking the props a real touch would
 // reach (onPress, onChangeText) — gray-box, like Testing Library's fireEvent, but in the real app.
 // `reset` / `openRoute` are delegated to handlers the AppProvider registers. Never started in release.
@@ -129,6 +129,19 @@ export function fill(ref: string, text: string): void {
   onChangeText(text);
 }
 
+/**
+ * The bridge connects as soon as the JS starts, the AppProvider registers its handlers a moment
+ * later (after reading storage): a reset sent right after launch waits for them instead of failing.
+ */
+async function ready(timeoutMs = 15_000): Promise<E2EHandlers> {
+  const end = Date.now() + timeoutMs;
+  while (!handlers) {
+    if (Date.now() > end) throw new Error('app not ready');
+    await new Promise<void>((r) => setTimeout(() => r(), 100));
+  }
+  return handlers;
+}
+
 async function handle(op: string, args: any): Promise<unknown> {
   switch (op) {
     case 'snapshot':
@@ -138,11 +151,9 @@ async function handle(op: string, args: any): Promise<unknown> {
     case 'fill':
       return fill(String(args.ref), String(args.text));
     case 'reset':
-      if (!handlers) throw new Error('app not ready');
-      return handlers.reset();
+      return (await ready()).reset();
     case 'openRoute':
-      if (!handlers) throw new Error('app not ready');
-      return handlers.openRoute(String(args.route), args.params ?? {});
+      return (await ready()).openRoute(String(args.route), args.params ?? {});
     default:
       throw new Error(`unknown op ${op}`);
   }
@@ -150,8 +161,8 @@ async function handle(op: string, args: any): Promise<unknown> {
 
 let started = false;
 
-/** Keeps a connection to the e2e runner open while the debug app runs. */
-export function startE2EBridge(url = 'ws://localhost:4011'): void {
+/** Keeps a connection to the e2e runner open while the debug or e2e app runs. */
+export function startE2EBridge(url: string = __E2E_BRIDGE_URL__): void {
   if (started) return;
   started = true;
   const connect = () => {

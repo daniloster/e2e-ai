@@ -248,6 +248,83 @@ npx playwright test -c e2e/playwright --grep @smoke      # #smoke tags become Pl
 Each scenario is a Playwright test, each Gherkin step a `test.step` with its screenshot attached;
 Playwright's video, trace and HTML report work as usual.
 
+### Device and browser clouds (Sauce Labs, BrowserStack)
+
+Any target can run on a cloud: add a `cloud` block and keep its integration.
+
+```json
+"android-appium-browserstack": {
+  "platform": "mobile", "os": "android",
+  "driver": { "type": "appium", "appId": "com.pocketnotes.e2e", "scheme": "pocketnotes", "resetLink": "e2e-reset",
+              "capabilities": { "platformName": "Android", "appium:automationName": "UiAutomator2",
+                                "appium:appPackage": "com.pocketnotes.e2e", "appium:appActivity": "com.pocketnotes.MainActivity" } },
+  "cloud": { "provider": "browserstack", "app": "../apps/mobile/android/app/build/outputs/apk/e2e/app-e2e.apk",
+             "device": "Google Pixel 8", "platformVersion": "14.0", "tunnel": true, "build": "${CI_RUN:-local}" }
+}
+```
+
+| `cloud` field | |
+|---|---|
+| `provider` | `saucelabs` or `browserstack` |
+| credentials | env `SAUCE_USERNAME` / `SAUCE_ACCESS_KEY`, `BROWSERSTACK_USERNAME` / `BROWSERSTACK_ACCESS_KEY` (or `username` / `accessKey`; never commit keys) |
+| `region` | Sauce data center: `us-west-1` (default), `eu-central-1`, `us-east-4` |
+| `app` | mobile: a build to upload (uploaded once per content), or `storage:…` / `bs://…` |
+| `device`, `platformVersion` | mobile device (Sauce accepts regular expressions) |
+| `browser`, `browserVersion`, `os`, `osVersion` | web |
+| `tunnel` | `true` starts Sauce Connect (`sc`) / BrowserStack Local (`BrowserStackLocal`, on PATH) for the run; a string uses a tunnel your CI already started |
+| `build`, `project`, `name` | labels in the vendor dashboard |
+| `options` | extra `sauce:options` / `bstack:options` |
+
+| Integration | Sauce Labs | BrowserStack |
+|---|---|---|
+| `appium` | vendor Appium hub | vendor Appium hub |
+| `rn-bridge` (ours) | vendor Appium hosts the app, our bridge drives it | same |
+| `maestro` | each scenario = one flow compiled from the reviewed plans, run by maestro-runner on the hub | same, or BrowserStack's Maestro API (`driver.runner: "browserstack-api"`) |
+| `mcp` web (ours), Playwright Test | Playwright through Sauce's Selenium Grid (Chrome/Edge, headed) | remote Playwright (`wss://cdp.browserstack.com/playwright`) |
+| `playwright-mcp` | same, via the server's environment | `browser.remoteEndpoint` |
+
+The run log and the report header link the vendor session (video, logs); the session is marked
+passed/failed. The vendor records the video, so local recording is off on cloud targets.
+
+**The app on a cloud device** must not need Metro and must reach your machine through the tunnel:
+build the e2e variant (`apps/mobile`: `E2E_API_URL=http://bs-local.com:4010 E2E_BRIDGE_URL=ws://bs-local.com:4011 npm run android:build:e2e`
+for BrowserStack Local; a host the Sauce Connect tunnel resolves for Sauce). It keeps the e2e deep
+links and bridge with the JavaScript bundled.
+
+**Maestro on a cloud** runs replay only (`--replay` implied): record the mobile targets once on a
+local device (any mobile target), then `--compile-only` writes the flows for review. A step that
+cannot be a whole-flow command (an API call after UI steps) fails with a message naming the Appium
+target to use instead.
+
+Check the whole integration without accounts: `npm run e2e:cloud:check` runs every cloud target
+against local stand-ins (a fake vendor API/hub in front of the local Appium, Playwright run-servers,
+a Selenium-Grid-style hub) and checks what the "vendor" received.
+
+## 5c. Roles, overlays and system screens
+
+Every driver reports elements with one set of roles — `button`, `link`, `textbox`, `checkbox`,
+`radio`, `combobox`, `slider`, `spinbutton`, `tab`, `tablist`, `menu`, `menuitem`, `listitem`,
+`list`, `row`, `heading`, `text`, `image`, `progressbar`, `dialog`, `alert`, `group` — mapped from
+iOS element types, Android classes (AndroidX/Material included), Maestro hierarchies, HTML and ARIA.
+
+- **Overlays are elements.** iOS alerts, sheets and popovers; Android AlertDialogs, runtime
+  permission prompts and bottom sheets; HTML `<dialog>` and `role="dialog|alertdialog"` appear as a
+  `dialog`/`alert` element named by their title (text: the message), next to their buttons. Steps can
+  target them and `@global` rules trigger on them.
+- **System alerts** (Appium): `driver.systemAlerts` = `dismiss` (default: closed before each screen
+  read), `accept`, or `leave` (kept on screen for steps and `@global` rules: `@global allow
+  notifications when asked`). The `@global` planner knows the OS's own prompt texts ("Allow", "Don't
+  allow", "While using the app", "Would Like to Send You Notifications"…), so rules may trigger on
+  screens your app guide never describes.
+- **Your own components:** map them in the config (keys: Android class, full or simple name; iOS
+  element type, or `Type:identifier`; web tag or ARIA role):
+
+```json
+"ui": { "roles": { "android": { "com.acme.ui.PrimaryButton": "button", "StarRating": "slider" },
+                   "ios": { "XCUIElementTypeOther:paywall": "dialog" },
+                   "web": { "sl-dialog": "dialog", "acme-button": "button" } } }
+```
+
 ## 6. Report templates (`reports/templates/*.html`)
 
 Each template is HTML + its own brief for the model:

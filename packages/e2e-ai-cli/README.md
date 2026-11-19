@@ -33,7 +33,17 @@ npx e2e-ai init --project apps/mobile --integrations android-appium,ios-appium -
 
 Integrations: `web` (Playwright via @playwright/mcp), `web-playwright-test` (Playwright Test runner),
 `android-appium`, `ios-appium`, `android-maestro`, `ios-maestro`, `mcp` (your own MCP server).
-Existing files and scripts are kept unless `--force`.
+`--cloud saucelabs,browserstack` (or `both`) adds a cloud variant of every target
+(`<target>-saucelabs`, `<target>-browserstack`). Existing files and scripts are kept unless `--force`.
+
+## Clouds
+
+A target with a `cloud` block runs on Sauce Labs or BrowserStack with the same command:
+`e2e-ai run --target android-appium-browserstack`. Credentials come from `SAUCE_USERNAME` /
+`SAUCE_ACCESS_KEY` or `BROWSERSTACK_USERNAME` / `BROWSERSTACK_ACCESS_KEY`; the build is uploaded,
+the tunnel opened and closed, the session linked in the log and report and marked passed/failed.
+Cloud Maestro targets run replay only (`--compile-only` to review the flows first). See
+[`e2e/README.md` §5b](../../e2e/README.md).
 
 ## Run options
 
@@ -51,6 +61,7 @@ Existing files and scripts are kept unless `--force`.
 | `--template a,b` | report templates (first → `index.html`) |
 | `--no-ai-report` | layout and texts generated without the model |
 | `--screenshots steps\|failures\|none`, `--video all\|mobile\|none` | media |
+| `--compile-only` | cloud Maestro targets: write each scenario's compiled flow, run nothing |
 
 Exit codes: `0` all passed · `1` a scenario failed · `2` configuration or usage error.
 

@@ -51,11 +51,15 @@ export function createMcpDriver(opts: { name: string; platform: Platform; server
       if (missing.length) throw new Error(`MCP server ${opts.name} lacks tools: ${missing.join(', ')}`);
       if (tools.includes('ui_start')) await call('ui_start');
     },
-    async stop() {
+    async stop(outcome) {
       if (!client) return;
-      await call('ui_stop').catch(() => undefined);
+      await call('ui_stop', outcome ? { ...outcome } : {}).catch(() => undefined);
       await client.close();
       client = undefined;
+    },
+    async links() {
+      if (!tools.includes('ui_links')) return [];
+      return JSON.parse((await call('ui_links')) || '[]') as { label: string; url: string }[];
     },
     resetApp: async () => void (await call('ui_reset')),
     async openRoute(route, params = {}) {

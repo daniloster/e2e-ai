@@ -16,12 +16,14 @@ import { join, relative } from 'node:path';
 import type { Page, TestInfo, TestType } from '@playwright/test';
 
 import { openPlanCache } from './cache.ts';
+import { remoteBrowser, sessionStatusScript, type CloudConfig } from './cloud/cloud.ts';
+import { newTunnelName } from './cloud/tunnel.ts';
 import { buildCatalog } from './catalog.ts';
 import { loadConfig } from './config.ts';
 import { matchesTags } from './dialect.ts';
 import { contextFromDocs } from './docs.ts';
 import { withRoutes } from './drivers/index.ts';
-import { SNAPSHOT_FN } from './drivers/web.ts';
+import { snapshotScript } from './drivers/web.ts';
 import { parseFeature } from './gherkin.ts';
 import { createLlm } from './llm.ts';
 import { loadGlobals } from './globals.ts';
@@ -47,11 +49,40 @@ export function createPageDriver(page: Page, opts: { baseUrl: string; startPath?
       await page.goto(url(target));
       await page.evaluate(() => window.dispatchEvent(new HashChangeEvent('hashchange')));
     },
-    snapshot: async () => (await page.evaluate(SNAPSHOT_FN)) as UiElement[],
+    snapshot: async () => (await page.evaluate(snapshotScript())) as UiElement[],
     tap: async (ref) => page.locator(`[data-e2e-ref="${ref}"]`).click({ timeout: 2000 }),
     fill: async (ref, text) => page.locator(`[data-e2e-ref="${ref}"]`).fill(text, { timeout: 2000 }),
     screenshot: async (path) => void (await page.screenshot({ path })),
   };
+}
+
+/** The web target of the config that runs on a cloud (E2E_TARGET picks one by name). */
+function cloudTarget(configPath: string, target?: string): { name: string; cloud: CloudConfig } | undefined {
+  const cfg = loadConfig(configPath);
+  const want = target ?? process.env.E2E_TARGET;
+  const entries = Object.entries(cfg.targets).filter(([n, t]) => t.platform === 'web' && t.cloud && (!want || n === want));
+  const [name, t] = entries[0] ?? [];
+  return name && t?.cloud ? { name, cloud: t.cloud } : undefined;
+}
+
+/**
+ * Playwright Test `use` options for a cloud web target, for the generated playwright.config.ts:
+ * BrowserStack → `connectOptions` (remote Playwright server); Sauce Labs → Playwright's Selenium Grid
+ * variables (set here, inherited by the workers) and headed browsers. Returns {} without a cloud
+ * target, so the same config runs locally. A `tunnel: true` target gets its tunnel from
+ * `@pn/e2e-ai/playwright-global-setup` under a name fixed here (E2E_TUNNEL_NAME).
+ */
+export function cloudUse(configPath = process.env.E2E_CONFIG ?? 'e2e/e2e-ai.config.json', target?: string): Record<string, unknown> {
+  const t = cloudTarget(configPath, target);
+  if (!t) return {};
+  if (t.cloud.tunnel === true) process.env.E2E_TUNNEL_NAME ??= newTunnelName();
+  const tunnelName = typeof t.cloud.tunnel === 'string' ? t.cloud.tunnel : t.cloud.tunnel ? process.env.E2E_TUNNEL_NAME : undefined;
+  const remote = remoteBrowser(t.cloud, { ...(tunnelName ? { tunnelName } : {}), sessionName: `e2e-ai ${t.name}` });
+  process.env.E2E_CLOUD_PROVIDER = t.cloud.provider;
+  process.env.E2E_CLOUD_TARGET = t.name;
+  if (remote.kind === 'connect') return { connectOptions: { wsEndpoint: remote.wsEndpoint, timeout: 120_000 } };
+  Object.assign(process.env, remote.env);
+  return { headless: false };
 }
 
 function walk(dir: string): string[] {
@@ -120,6 +151,11 @@ export function defineFeatureTests(test: TestType<any, any>, opts: FeatureTestOp
                 }),
             });
             const failed = r.steps.find((s) => s.status === 'failed');
+            if (process.env.E2E_CLOUD_PROVIDER === 'browserstack') {
+              // One remote browser per test: mark its session in the BrowserStack dashboard.
+              const script = sessionStatusScript({ provider: 'browserstack' }, !failed, failed ? `${failed.step}: ${failed.error ?? ''}` : 'passed');
+              await page.evaluate(() => undefined, script).catch(() => undefined);
+            }
             if (failed) throw new Error(`${failed.step}: ${failed.error ?? 'failed'}${failed.line ? ` (${uri}:${failed.line})` : ''}`);
           },
         );

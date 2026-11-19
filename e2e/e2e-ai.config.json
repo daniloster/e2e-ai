@@ -152,6 +152,276 @@
         "scheme": "pocketnotes",
         "resetLink": "e2e-reset"
       }
+    },
+    "android-appium-browserstack": {
+      "platform": "mobile",
+      "os": "android",
+      "description": "Android on browserstack via Appium (e2e build: npm run android:build:e2e in apps/mobile)",
+      "driver": {
+        "type": "appium",
+        "appId": "com.pocketnotes.e2e",
+        "scheme": "pocketnotes",
+        "resetLink": "e2e-reset",
+        "capabilities": {
+          "platformName": "Android",
+          "appium:automationName": "UiAutomator2",
+          "appium:appPackage": "com.pocketnotes.e2e",
+          "appium:appActivity": "com.pocketnotes.MainActivity",
+          "appium:noReset": true
+        }
+      },
+      "cloud": {
+        "provider": "browserstack",
+        "app": "../apps/mobile/android/app/build/outputs/apk/e2e/app-e2e.apk",
+        "device": "Google Pixel 8",
+        "platformVersion": "14.0",
+        "tunnel": true,
+        "build": "${E2E_BUILD_NAME:-e2e-ai local}",
+        "project": "pocket-notes"
+      }
+    },
+    "android-bridge-browserstack": {
+      "platform": "mobile",
+      "os": "android",
+      "description": "Android on browserstack, driven by our in-app bridge (the cloud's Appium hosts the app)",
+      "driver": {
+        "type": "rn-bridge",
+        "appId": "com.pocketnotes.e2e",
+        "scheme": "pocketnotes",
+        "capabilities": {
+          "platformName": "Android",
+          "appium:automationName": "UiAutomator2",
+          "appium:appPackage": "com.pocketnotes.e2e",
+          "appium:appActivity": "com.pocketnotes.MainActivity",
+          "appium:noReset": true
+        }
+      },
+      "cloud": {
+        "provider": "browserstack",
+        "app": "../apps/mobile/android/app/build/outputs/apk/e2e/app-e2e.apk",
+        "device": "Google Pixel 8",
+        "platformVersion": "14.0",
+        "tunnel": true,
+        "build": "${E2E_BUILD_NAME:-e2e-ai local}",
+        "project": "pocket-notes"
+      }
+    },
+    "android-maestro-browserstack": {
+      "platform": "mobile",
+      "os": "android",
+      "description": "Android on browserstack: each scenario as one Maestro flow compiled from the reviewed plans (maestro-runner)",
+      "driver": {
+        "type": "maestro",
+        "appId": "com.pocketnotes.e2e",
+        "scheme": "pocketnotes",
+        "resetLink": "e2e-reset",
+        "capabilities": {
+          "platformName": "Android",
+          "appium:automationName": "UiAutomator2",
+          "appium:appPackage": "com.pocketnotes.e2e",
+          "appium:appActivity": "com.pocketnotes.MainActivity",
+          "appium:noReset": true
+        },
+        "maestroRunner": [
+          "npx",
+          "maestro-runner"
+        ]
+      },
+      "cloud": {
+        "provider": "browserstack",
+        "app": "../apps/mobile/android/app/build/outputs/apk/e2e/app-e2e.apk",
+        "device": "Google Pixel 8",
+        "platformVersion": "14.0",
+        "tunnel": true,
+        "build": "${E2E_BUILD_NAME:-e2e-ai local}",
+        "project": "pocket-notes"
+      }
+    },
+    "web-browserstack": {
+      "platform": "web",
+      "description": "Web on browserstack browsers, our Playwright driver",
+      "driver": {
+        "type": "mcp",
+        "command": "node",
+        "args": [
+          "packages/e2e-ai/src/mcp/web-mcp.ts",
+          "--base-url",
+          "${PN_WEB_URL:-http://localhost:5180}",
+          "--start",
+          "/app.html"
+        ],
+        "cwd": ".."
+      },
+      "cloud": {
+        "provider": "browserstack",
+        "browser": "chrome",
+        "os": "OS X",
+        "osVersion": "Sonoma",
+        "tunnel": true,
+        "build": "${E2E_BUILD_NAME:-e2e-ai local}",
+        "project": "pocket-notes"
+      }
+    },
+    "web-playwright-mcp-browserstack": {
+      "platform": "web",
+      "description": "Web on browserstack browsers through @playwright/mcp",
+      "driver": {
+        "type": "playwright-mcp",
+        "baseUrl": "${PN_WEB_URL:-http://localhost:5180}",
+        "startPath": "/app.html",
+        "command": "npx",
+        "args": [
+          "@playwright/mcp",
+          "--browser",
+          "chrome",
+          "--headless",
+          "--isolated"
+        ],
+        "cwd": ".."
+      },
+      "cloud": {
+        "provider": "browserstack",
+        "browser": "chrome",
+        "os": "OS X",
+        "osVersion": "Sonoma",
+        "tunnel": true,
+        "build": "${E2E_BUILD_NAME:-e2e-ai local}",
+        "project": "pocket-notes"
+      }
+    },
+    "android-appium-saucelabs": {
+      "platform": "mobile",
+      "os": "android",
+      "description": "Android on saucelabs via Appium (e2e build: npm run android:build:e2e in apps/mobile)",
+      "driver": {
+        "type": "appium",
+        "appId": "com.pocketnotes.e2e",
+        "scheme": "pocketnotes",
+        "resetLink": "e2e-reset",
+        "capabilities": {
+          "platformName": "Android",
+          "appium:automationName": "UiAutomator2",
+          "appium:appPackage": "com.pocketnotes.e2e",
+          "appium:appActivity": "com.pocketnotes.MainActivity",
+          "appium:noReset": true
+        }
+      },
+      "cloud": {
+        "provider": "saucelabs",
+        "app": "../apps/mobile/android/app/build/outputs/apk/e2e/app-e2e.apk",
+        "device": "Google Pixel.*",
+        "platformVersion": "14.0",
+        "tunnel": true,
+        "build": "${E2E_BUILD_NAME:-e2e-ai local}",
+        "project": "pocket-notes"
+      }
+    },
+    "android-bridge-saucelabs": {
+      "platform": "mobile",
+      "os": "android",
+      "description": "Android on saucelabs, driven by our in-app bridge (the cloud's Appium hosts the app)",
+      "driver": {
+        "type": "rn-bridge",
+        "appId": "com.pocketnotes.e2e",
+        "scheme": "pocketnotes",
+        "capabilities": {
+          "platformName": "Android",
+          "appium:automationName": "UiAutomator2",
+          "appium:appPackage": "com.pocketnotes.e2e",
+          "appium:appActivity": "com.pocketnotes.MainActivity",
+          "appium:noReset": true
+        }
+      },
+      "cloud": {
+        "provider": "saucelabs",
+        "app": "../apps/mobile/android/app/build/outputs/apk/e2e/app-e2e.apk",
+        "device": "Google Pixel.*",
+        "platformVersion": "14.0",
+        "tunnel": true,
+        "build": "${E2E_BUILD_NAME:-e2e-ai local}",
+        "project": "pocket-notes"
+      }
+    },
+    "android-maestro-saucelabs": {
+      "platform": "mobile",
+      "os": "android",
+      "description": "Android on saucelabs: each scenario as one Maestro flow compiled from the reviewed plans (maestro-runner)",
+      "driver": {
+        "type": "maestro",
+        "appId": "com.pocketnotes.e2e",
+        "scheme": "pocketnotes",
+        "resetLink": "e2e-reset",
+        "capabilities": {
+          "platformName": "Android",
+          "appium:automationName": "UiAutomator2",
+          "appium:appPackage": "com.pocketnotes.e2e",
+          "appium:appActivity": "com.pocketnotes.MainActivity",
+          "appium:noReset": true
+        },
+        "maestroRunner": [
+          "npx",
+          "maestro-runner"
+        ]
+      },
+      "cloud": {
+        "provider": "saucelabs",
+        "app": "../apps/mobile/android/app/build/outputs/apk/e2e/app-e2e.apk",
+        "device": "Google Pixel.*",
+        "platformVersion": "14.0",
+        "tunnel": true,
+        "build": "${E2E_BUILD_NAME:-e2e-ai local}",
+        "project": "pocket-notes"
+      }
+    },
+    "web-saucelabs": {
+      "platform": "web",
+      "description": "Web on saucelabs browsers, our Playwright driver",
+      "driver": {
+        "type": "mcp",
+        "command": "node",
+        "args": [
+          "packages/e2e-ai/src/mcp/web-mcp.ts",
+          "--base-url",
+          "${PN_WEB_URL:-http://localhost:5180}",
+          "--start",
+          "/app.html"
+        ],
+        "cwd": ".."
+      },
+      "cloud": {
+        "provider": "saucelabs",
+        "browser": "chrome",
+        "os": "Windows 11",
+        "tunnel": true,
+        "build": "${E2E_BUILD_NAME:-e2e-ai local}",
+        "project": "pocket-notes"
+      }
+    },
+    "web-playwright-mcp-saucelabs": {
+      "platform": "web",
+      "description": "Web on saucelabs browsers through @playwright/mcp",
+      "driver": {
+        "type": "playwright-mcp",
+        "baseUrl": "${PN_WEB_URL:-http://localhost:5180}",
+        "startPath": "/app.html",
+        "command": "npx",
+        "args": [
+          "@playwright/mcp",
+          "--browser",
+          "chrome",
+          "--headless",
+          "--isolated"
+        ],
+        "cwd": ".."
+      },
+      "cloud": {
+        "provider": "saucelabs",
+        "browser": "chrome",
+        "os": "Windows 11",
+        "tunnel": true,
+        "build": "${E2E_BUILD_NAME:-e2e-ai local}",
+        "project": "pocket-notes"
+      }
     }
   },
   "media": {

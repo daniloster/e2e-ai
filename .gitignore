@@ -44,3 +44,6 @@ tools/brand/out/
 # e2e-ai run reports (generated)
 e2e/reports/runs/
 .playwright-mcp/
+
+# fake-cloud check (scripts/fake-cloud-check.ts) writes its temporary config here
+e2e/.fake-cloud.config.json

@@ -7,6 +7,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { promisify } from 'node:util';
 
+import { ANDROID_SYSTEM_PACKAGES, androidOverlay, androidRole } from '../roles.ts';
 import type { Driver, UiElement } from '../types.ts';
 
 const run = promisify(execFile);
@@ -34,6 +35,8 @@ const attr = (s: string, name: string): string =>
 /** Parses `uiautomator dump` XML into UiElements with tap centres. Exported for tests. */
 export function parseUiAutomator(xml: string): Node[] {
   const out: Node[] = [];
+  // Overlays (AlertDialog, permission prompt, bottom sheet) become one element named by their title.
+  const overlay: { role?: string; title?: string; message?: string; box?: number[]; system?: boolean } = {};
   // `uiautomator dump` writes <node class="…">; Appium (UiAutomator2) names each element after its
   // class (<android.widget.EditText …>). Both carry the same attributes, so read either.
   for (const m of xml.matchAll(/<(?:node|[A-Za-z_][\w$]*(?:\.[\w$]+)+)\b[^>]*\bbounds="[^"]*"[^>]*>/g)) {
@@ -46,13 +49,31 @@ export function parseUiAutomator(xml: string): Node[] {
     const checkable = attr(tag, 'checkable') === 'true';
     const b = /\[(\d+),(\d+)\]\[(\d+),(\d+)\]/.exec(attr(tag, 'bounds'));
     if (!b) continue;
-    const role = /EditText/.test(cls) ? 'textbox' : checkable ? 'checkbox' : clickable ? 'button' : text ? 'text' : '';
+    const mark = androidOverlay(rid);
+    if (mark) {
+      overlay.role ??= mark.role;
+      if (mark.part === 'title' && text) overlay.title ??= text;
+      if (mark.part === 'message' && text) overlay.message ??= text;
+      if (mark.part === 'container') overlay.box ??= b.slice(1).map(Number);
+    }
+    if (ANDROID_SYSTEM_PACKAGES.includes(attr(tag, 'package'))) {
+      overlay.system = true;
+      if (!overlay.title && text && !clickable) overlay.title = text;
+      overlay.box ??= b.slice(1).map(Number);
+    }
+    const role = androidRole(cls, { clickable, checkable, text });
     if (!role && !rid) continue;
+    if (mark?.part === 'container' && !text) continue;
     const el: UiElement = { ref: String(out.length), role: role || 'group', name: desc || text, text };
     if (rid) el.testId = rid.replace(/^.*:id\//, '');
     if (checkable) el.checked = attr(tag, 'checked') === 'true';
     if (role === 'textbox') el.value = text;
     const [x1, y1, x2, y2] = b.slice(1).map(Number) as [number, number, number, number];
+    out.push({ el, cx: Math.round((x1 + x2) / 2), cy: Math.round((y1 + y2) / 2) });
+  }
+  if (overlay.title || overlay.message) {
+    const [x1 = 0, y1 = 0, x2 = 0, y2 = 0] = overlay.box ?? [];
+    const el: UiElement = { ref: String(out.length), role: overlay.role ?? 'dialog', name: overlay.title ?? overlay.message ?? '', text: overlay.message ?? overlay.title ?? '' };
     out.push({ el, cx: Math.round((x1 + x2) / 2), cy: Math.round((y1 + y2) / 2) });
   }
   return out;

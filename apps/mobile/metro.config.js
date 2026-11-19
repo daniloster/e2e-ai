@@ -1,6 +1,7 @@
 const path = require('node:path');
 const { getDefaultConfig } = require('expo/metro-config');
 const { mergeConfig } = require('@react-native/metro-config');
+const { e2eEnv } = require('./babel/inline-e2e-env');
 
 const defaults = getDefaultConfig(__dirname);
 
@@ -18,6 +19,9 @@ const FROM_APP = /^@pn\//;
  * @type {import('@react-native/metro-config').MetroConfig}
  */
 const config = {
+  // The e2e flags are inlined by Babel (babel/inline-e2e-env.js): key the transform cache on them so
+  // switching between a normal and an e2e build (or another API URL) never reuses stale transforms.
+  cacheVersion: `e2e:${JSON.stringify(e2eEnv())}`,
   watchFolders: [path.resolve(__dirname, '../../apps-modules')],
   resolver: {
     nodeModulesPaths: [path.resolve(__dirname, 'node_modules')],

@@ -3,4 +3,4 @@
 import { test } from '@playwright/test';
 import { defineFeatureTests } from '@pn/e2e-ai/playwright';
 
-defineFeatureTests(test, { config: "e2e/e2e-ai.config.json" });
+defineFeatureTests(test, { config: process.env.E2E_CONFIG ?? "e2e/e2e-ai.config.json" });

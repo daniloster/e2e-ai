@@ -55,6 +55,17 @@ describe('e2e-ai init', () => {
     expect(pkg.scripts.e2e).toBe('e2e-ai run --config e2e/e2e-ai.config.json');
   });
 
+  it('adds cloud variants of every target with --cloud', () => {
+    const root = mkdtempSync(join(tmpdir(), 'e2e-init-'));
+    const o = opts({ integrations: parseIntegrations('web,android-appium'), clouds: ['saucelabs', 'browserstack'] });
+    applyInit(root, o, planInit(o), false, () => undefined);
+    const { cfg } = load(join(root, 'e2e/e2e-ai.config.json'));
+    expect(Object.keys(cfg.targets)).toEqual(['web', 'android-appium', 'web-saucelabs', 'android-appium-saucelabs', 'web-browserstack', 'android-appium-browserstack']);
+    expect(cfg.targets['android-appium-browserstack']?.cloud).toMatchObject({ provider: 'browserstack', tunnel: true, device: 'Google Pixel 8' });
+    expect(cfg.targets['web-saucelabs']?.cloud).toMatchObject({ provider: 'saucelabs', browser: 'chrome' });
+    expect(readFileSync(join(root, 'e2e/README.md'), 'utf8')).toContain('SAUCE_USERNAME');
+  });
+
   it('keeps existing files and scripts unless forced', () => {
     const root = mkdtempSync(join(tmpdir(), 'e2e-init-'));
     writeFileSync(join(root, 'package.json'), JSON.stringify({ scripts: { e2e: 'custom' } }));

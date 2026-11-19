@@ -254,7 +254,8 @@ const DATA = /*__REPORT_DATA__*/null;
     ["Driver", `${DATA.run.driver} · ${DATA.run.platform}`],
     ["Planner", DATA.run.model ? `${DATA.run.model}${DATA.run.mode === "no-cache" ? " · every step planned (no cache)" : ""}` : "replay (no model)"],
     DATA.run.tags ? ["Tags", DATA.run.tags] : null,
-  ].filter(Boolean).map(([k, v]) => `<span class="chip">${esc(k)} <b>${esc(v)}</b></span>`).join("");
+  ].filter(Boolean).map(([k, v]) => `<span class="chip">${esc(k)} <b>${esc(v)}</b></span>`).join("") +
+    (DATA.run.links || []).filter((l) => /^https:\/\//.test(l.url)).map((l) => `<a class="chip" href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.label)} ↗</a>`).join("");
   const v = $("#verdict");
   v.textContent = T.failed ? `${T.failed} FAILED` : "ALL PASSED";
   v.className = `verdict ${T.failed ? "fail" : "pass"}`;

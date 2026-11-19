@@ -787,6 +787,35 @@ fill step; none of it is part of the e2e tool.
   chosen integrations, docs skeletons, examples, report templates, README, `.gitignore`, npm scripts,
   a VS Code recommendation and optionally a GitHub Actions workflow.
 
+### 12.11 Device and browser clouds; roles and overlays
+
+- **Clouds** (D-34): a `cloud` block on any target, keeping its integration. Appium and our RN bridge
+  use the vendor Appium hub (build uploaded once per content hash, tunnel opened per run, session
+  marked passed/failed, dashboard linked); web uses remote Playwright on BrowserStack and Playwright's
+  Selenium-Grid mode on Sauce (the only routes the vendors document), for our driver, `@playwright/mcp`
+  and Playwright Test. **Maestro** cannot be driven step by step on a cloud — every Maestro flow opens a
+  fresh remote session — so each scenario is compiled from its reviewed plans into one flow (API setup
+  run by the engine first; recorded selectors, stable test ids before accessible names; counts as
+  indexed assertions; `@global` rules as conditional sub-flows) and run by maestro-runner over the hub
+  or by BrowserStack's Maestro API.
+- **Validation without accounts:** a fake vendor (upload API + hub in front of the local Appium; a
+  Selenium-Grid-style browser hub) and Playwright run-servers; `npm run e2e:cloud:check` runs every
+  cloud target and checks what the vendor received. Real-vendor runs need credentials (Q-10).
+- Found on the way (F-21): the reset link raced the bridge handlers on a fresh e2e build ("app not
+  ready"; fixed on both sides); `@playwright/mcp`'s remote connect needs the `x-playwright-browser`
+  header and its own Playwright version in the caps; Playwright's browser installer garbage-collects
+  other versions' browsers.
+- **App side:** an Android `e2e` build type (JS bundled, e2e hooks behind a build-time flag, API and
+  bridge URLs set at build time for the tunnel host). iOS has no e2e configuration yet (Q-11).
+- **Roles** (D-35): one vocabulary for all platforms; overlays (alerts, sheets, permission prompts,
+  `<dialog>`) are elements named by their title, so steps and `@global` rules act on them; teams map
+  their own components in `ui.roles`; system alerts can be dismissed, accepted or left to rules; the
+  `@global` planner knows the OS's prompt texts (GLOBAL_PLANNER_VERSION 3).
+
+Open: **Q-10** run the cloud targets against real Sauce Labs / BrowserStack accounts (and maestro-runner,
+blocked from installation here). **Q-11** an iOS e2e configuration and a signed `.ipa` for real iOS
+devices (Sauce simulators accept a zipped `.app`).
+
 ---
 
 ## Appendix A. Reproduce

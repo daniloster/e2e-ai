@@ -6,6 +6,7 @@
     "android": "react-native run-android",
     "android:build:dev": "cd android && ./gradlew assembleDebug",
     "android:build:release": "cd android && ./gradlew assembleRelease",
+    "android:build:e2e": "cd android && E2E_BUILD=1 ./gradlew assembleE2e",
     "ios": "react-native run-ios",
     "ios:sim": "scripts/ios-sim.sh",
     "lint": "cd ../.. && node node_modules/eslint/bin/eslint.js apps/mobile",

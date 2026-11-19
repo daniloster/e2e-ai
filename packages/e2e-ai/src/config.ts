@@ -3,6 +3,8 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, isAbsolute, resolve } from 'node:path';
 
+import { configureRoles, type RoleConfig } from './roles.ts';
+
 import type { ModelConfig } from './llm.ts';
 import type { TargetConfig } from './drivers/index.ts';
 
@@ -31,6 +33,8 @@ export interface E2eConfig {
   };
   /** Labelled steps the planner benchmark scores (optional). */
   bench?: { cases: string[]; snapshots: string };
+  /** UI vocabulary: extra or overriding native type → role maps per platform (see roles.ts). */
+  ui?: { roles?: RoleConfig };
 }
 
 const expand = (s: string): string =>
@@ -56,7 +60,11 @@ export function loadConfig(path = 'e2e/e2e-ai.config.json'): E2eConfig {
     if (t.mcp?.cwd) t.mcp.cwd = p(t.mcp.cwd);
     const d = t.driver as { cwd?: string } | undefined;
     if (d?.cwd) d.cwd = p(d.cwd);
+    // A cloud build to upload is a path like the others; vendor references (storage:…, bs://…, URLs) stay.
+    if (t.cloud?.app && !/^(storage:|bs:\/\/|https?:\/\/)/.test(t.cloud.app)) t.cloud.app = p(t.cloud.app);
+    if (t.cloud?.tunnelBinary && /[\\/]/.test(t.cloud.tunnelBinary)) t.cloud.tunnelBinary = p(t.cloud.tunnelBinary);
   }
+  configureRoles((raw.ui as { roles?: RoleConfig } | undefined)?.roles);
   return {
     dir,
     model: raw.model as ModelConfig,
@@ -72,6 +80,7 @@ export function loadConfig(path = 'e2e/e2e-ai.config.json'): E2eConfig {
       ...(reports.model ? { model: reports.model } : {}),
     },
     targets,
+    ...(raw.ui ? { ui: raw.ui as { roles?: RoleConfig } } : {}),
     media: { screenshots: 'steps', video: 'all', ...((raw.media ?? {}) as object) },
     ...(raw.benchmark?.models ? { benchmark: raw.benchmark as never } : {}),
     ...(raw.bench

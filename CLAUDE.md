@@ -29,4 +29,4 @@ Read `ARCHITECTURE.md` first. This file adds the rules every change must respect
 - `@pn/core` stays pure and deterministic (no clock, randomness, platform or UI imports).
 - en-GB is the source language; es and pt-BR keep identical keys.
 - The e2e deep links (`pocketnotes://signin`, `notes?session=…`, `e2e-reset`) and the in-app e2e
-  bridge are debug-build only.
+  bridge are on only in debug builds and the e2e build (`E2E_BUILD=1`, `E2E_HOOKS`); never in release.

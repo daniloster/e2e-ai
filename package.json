@@ -32,7 +32,8 @@
     "e2e:ai:ios:replay": "node packages/e2e-ai-cli/src/cli.ts run --target ios --replay",
     "e2e:ai:report": "node packages/e2e-ai-cli/src/cli.ts report",
     "e2e:ai": "node packages/e2e-ai-cli/src/cli.ts",
-    "e2e:ai:benchmark": "node packages/e2e-ai-cli/src/cli.ts run --target web --benchmark"
+    "e2e:ai:benchmark": "node packages/e2e-ai-cli/src/cli.ts run --target web --benchmark",
+    "e2e:cloud:check": "node scripts/fake-cloud-check.ts"
   },
   "devDependencies": {
     "@pn/brand": "*",

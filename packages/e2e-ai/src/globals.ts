@@ -9,10 +9,11 @@ import type { Catalog } from './catalog.ts';
 import { isGlobalSource, parseGlobals, type GlobalProblem, type GlobalRule } from './globalSyntax.ts';
 import type { JsonSchema, Llm } from './llm.ts';
 import { planStep } from './planner.ts';
+import { SYSTEM_SCREENS } from './roles.ts';
 import type { PlannedAction } from './types.ts';
 
 /** Bump when @global planning or its guards change: cached @global plans expire (step plans do not). */
-export const GLOBAL_PLANNER_VERSION = 2;
+export const GLOBAL_PLANNER_VERSION = 3;
 
 export interface GlobalPlanResult {
   when: string[];
@@ -72,8 +73,10 @@ export function groundTriggers(when: string[], docs: string, rule: string, fixes
   return out;
 }
 
-export async function planGlobal(llm: Llm, cat: Catalog, docs: string, rule: GlobalRule): Promise<GlobalPlanResult> {
+export async function planGlobal(llm: Llm, cat: Catalog, appDocs: string, rule: GlobalRule): Promise<GlobalPlanResult> {
   const fixes: string[] = [];
+  // The OS's own prompts (permissions, alerts) are part of what a rule may react to.
+  const docs = `${appDocs}\n\n${SYSTEM_SCREENS}`;
   const raw = await llm.json<{ when_visible?: string[]; do?: string }>({
     system: `${SYSTEM}\n\nApp description and screens:\n${docs}`,
     prompt: `Rule: ${rule.text}\nOutput:`,

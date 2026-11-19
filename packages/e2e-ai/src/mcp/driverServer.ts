@@ -9,12 +9,22 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { z } from 'zod';
 
+import type { CloudConfig } from '../cloud/cloud.ts';
+import { rolesFromEnv } from '../roles.ts';
 import type { Driver } from '../types.ts';
 
 const ok = (text = 'ok') => ({ content: [{ type: 'text' as const, text }] });
 const fail = (e: unknown) => ({ isError: true, content: [{ type: 'text' as const, text: e instanceof Error ? e.message : String(e) }] });
 
+/** Cloud settings handed to an MCP driver server by the runner (`E2E_CLOUD`, JSON). */
+export function cloudFromEnv(): { cloud?: CloudConfig; sessionName?: string } {
+  const raw = process.env.E2E_CLOUD;
+  if (!raw) return {};
+  return { cloud: JSON.parse(raw) as CloudConfig, ...(process.env.E2E_SESSION_NAME ? { sessionName: process.env.E2E_SESSION_NAME } : {}) };
+}
+
 export async function serveDriver(driver: Driver, name: string): Promise<void> {
+  rolesFromEnv();
   const server = new McpServer({ name, version: '0.1.0' });
   const tool = (
     id: string,
@@ -33,9 +43,19 @@ export async function serveDriver(driver: Driver, name: string): Promise<void> {
   tool('ui_start', 'Start the driver (browser / app connection).', {}, async () => {
     await driver.start();
   });
-  tool('ui_stop', 'Stop the driver.', {}, async () => {
-    await driver.stop();
-  });
+  tool(
+    'ui_stop',
+    'Stop the driver; with the run outcome a cloud session is marked passed/failed.',
+    { passed: z.boolean().optional(), scenarios: z.number().optional(), failed: z.number().optional() },
+    async (a) => {
+      await driver.stop(
+        typeof a.passed === 'boolean' ? { passed: a.passed, scenarios: Number(a.scenarios ?? 0), failed: Number(a.failed ?? 0) } : undefined,
+      );
+    },
+  );
+  tool('ui_links', 'Links to watch this run elsewhere (cloud dashboard, video) as JSON [{label,url}].', {}, async () =>
+    JSON.stringify((await driver.links?.()) ?? []),
+  );
   tool('ui_reset', 'Bring the app to a clean, signed-out start state.', {}, async () => {
     await driver.resetApp();
   });

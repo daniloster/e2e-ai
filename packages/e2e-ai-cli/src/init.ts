@@ -32,6 +32,8 @@ export interface InitOptions {
   model: { name: string; endpoint: string };
   /** Also write a GitHub Actions workflow. */
   ci?: 'github';
+  /** Also write each target's cloud variant (`<target>-saucelabs`, `<target>-browserstack`). */
+  clouds?: ('saucelabs' | 'browserstack')[];
 }
 
 export const DEFAULTS: Omit<InitOptions, 'project' | 'dir' | 'integrations'> = {
@@ -228,7 +230,7 @@ replayed without a model in CI.
 
 ${targets}
 
-## Run
+${o.clouds?.length ? `Cloud variants (${o.clouds.join(', ')}): set ${o.clouds.map((c) => (c === 'saucelabs' ? '`SAUCE_USERNAME` / `SAUCE_ACCESS_KEY`' : '`BROWSERSTACK_USERNAME` / `BROWSERSTACK_ACCESS_KEY`')).join(' and ')}, point each mobile \`cloud.app\` at a test build that runs without a dev server and reaches your API through the tunnel, and install the tunnel binary (\`sc\` / \`BrowserStackLocal\`) or set \`tunnel\` to a running tunnel's name.\n\n` : ''}## Run
 
 \`\`\`sh
 ${run} e2e:doctor        # checks docs, routines, the model endpoint and each driver
@@ -258,7 +260,20 @@ routine completion and checks.
 /** Everything `init` writes, keyed by path relative to the project folder. */
 export function planInit(o: InitOptions): { files: Map<string, string>; scripts: Record<string, string> } {
   const d = (p: string) => posix.join(o.dir.split('\\').join('/'), p);
-  const targets = Object.fromEntries(o.integrations.map((i) => target(i, o)).filter((t): t is [string, unknown] => !!t));
+  const local = o.integrations.map((i) => target(i, o)).filter((t): t is [string, unknown] => !!t);
+  const cloudVariants = (o.clouds ?? []).flatMap((provider) =>
+    local
+      .filter(([name]) => name !== 'custom-mcp')
+      .map(([name, t]): [string, unknown] => {
+        const tt = t as { platform: string; description?: string };
+        const cloud =
+          tt.platform === 'mobile'
+            ? { provider, app: '<path to your test build: .apk / .ipa / zipped .app>', device: provider === 'saucelabs' ? 'Google Pixel.*' : 'Google Pixel 8', platformVersion: '14.0', tunnel: true, build: '${E2E_BUILD_NAME:-local}' }
+            : { provider, browser: 'chrome', tunnel: true, build: '${E2E_BUILD_NAME:-local}' };
+        return [`${name}-${provider}`, { ...tt, description: `${tt.description ?? name} — on ${provider}`, cloud }];
+      }),
+  );
+  const targets = Object.fromEntries([...local, ...cloudVariants]);
   const config = {
     model: { provider: 'openai', endpoint: '${E2E_MODEL_ENDPOINT:-' + o.model.endpoint + '}', name: '${E2E_MODEL:-' + o.model.name + '}' },
     docs: { api: ['docs/api.md'], guide: 'docs/app-guide.md' },

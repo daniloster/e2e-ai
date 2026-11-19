@@ -96,6 +96,11 @@ export interface RunOptions {
 const scopeKey = (scope?: Record<string, string>) =>
   scope ? JSON.stringify(Object.fromEntries(Object.entries(scope).sort(([a], [b]) => a.localeCompare(b)))) : '';
 const keyOf = (step: ScenarioStep, fingerprint: string) => planKey(step.text, step.keyword, fingerprint + scopeKey(step.scope));
+/** The plan-cache key of a step (what the runner stores and replays). */
+export const stepPlanKey = keyOf;
+/** The plan-cache key of an @global rule (its triggers depend on the screens description too). */
+export const globalPlanKey = (rule: string, fingerprint: string, description: string) =>
+  planKey(rule, 'global', `${fingerprint}\n${description}\nglobal-planner:${GLOBAL_PLANNER_VERSION}`);
 
 /** Replaces each `@routine` call with the steps it expands to; a failed expansion becomes an error step. */
 export async function expandRoutines(steps: ScenarioStep[], opts: Pick<RunOptions, 'routines' | 'llm'>): Promise<ScenarioStep[]> {
@@ -202,15 +207,18 @@ async function act(x: ExecCtx, a: PlannedAction, intent: Intent, run: (ref: stri
   }
 }
 
+/** Runs one `call` action (an API endpoint from the docs) and remembers its answer as facts. */
+export async function runCall(catalog: Catalog, world: World, driver: Driver, a: PlannedAction): Promise<void> {
+  const fn = catalog.fns[a.fn ?? ''];
+  if (!fn) throw new StepFailure(`unknown fn ${a.fn}`);
+  const result = await fn.run(a.args ?? {}, { driver, world });
+  if (result !== undefined) world.remember(`${a.fn}#${Object.keys(world.facts).length}`, result);
+}
+
 async function execute(x: ExecCtx, a: PlannedAction): Promise<void> {
   switch (a.kind) {
-    case 'call': {
-      const fn = x.catalog.fns[a.fn ?? ''];
-      if (!fn) throw new StepFailure(`unknown fn ${a.fn}`);
-      const result = await fn.run(a.args ?? {}, { driver: x.driver, world: x.world });
-      if (result !== undefined) x.world.remember(`${a.fn}#${Object.keys(x.world.facts).length}`, result);
-      return;
-    }
+    case 'call':
+      return runCall(x.catalog, x.world, x.driver, a);
     case 'open': {
       if (!a.route) throw new StepFailure('open without route');
       // Route templates ({token}) are filled from what the scenario's API calls returned.
@@ -243,12 +251,15 @@ async function execute(x: ExecCtx, a: PlannedAction): Promise<void> {
     }
     case 'expect_count': {
       let last = -1;
+      let group: { key: string; items: UiElement[] } | undefined;
       const ok = await poll(x.timeoutMs, async () => {
-        const g = groundGroup(await x.driver.snapshot(), a.target ?? '');
-        last = g?.items.length ?? 0;
+        group = groundGroup(await x.driver.snapshot(), a.target ?? '');
+        last = group?.items.length ?? 0;
         return last === a.count ? true : undefined;
       });
       if (!ok) throw new StepFailure(`expected ${a.count} × "${a.target}", found ${last}`);
+      // Remember which group was counted (flows compiled for clouds count the same elements).
+      if (group) x.plan.resolved[`${x.driver.platform}:${a.target ?? ''}#group`] = { role: group.items[0]?.role ?? 'listitem', name: '', pattern: group.key };
       return;
     }
   }
@@ -311,9 +322,8 @@ async function prepareGlobals(
   const memo = globalMemo.get(opts.cache) ?? new Map<string, StepPlan>();
   globalMemo.set(opts.cache, memo);
   // The trigger texts are grounded in the screens description, so it is part of the key.
-  const fp = `${fingerprint}\n${opts.context.description}\nglobal-planner:${GLOBAL_PLANNER_VERSION}`;
   for (const rule of opts.globals ?? []) {
-    const key = planKey(rule.text, 'global', fp);
+    const key = globalPlanKey(rule.text, fingerprint, opts.context.description);
     let plan = memo.get(key) ?? opts.cache.get(key);
     if (!plan) {
       if (!opts.llm) {
