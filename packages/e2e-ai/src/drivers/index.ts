@@ -69,6 +69,9 @@ export interface TargetConfig {
   mcp?: McpServerSpec;
   /** Run this target on Sauce Labs or BrowserStack (see cloud/cloud.ts). */
   cloud?: CloudConfig;
+  /** How long each action and assertion polls the screen before failing (default 5000 ms). A string
+   * is accepted so the config can take it from the environment (`"${E2E_STEP_TIMEOUT_MS:-5000}"`). */
+  stepTimeoutMs?: number | string;
 }
 
 /** Gives drivers that only know `navigate(target)` the app guide's named routes. */

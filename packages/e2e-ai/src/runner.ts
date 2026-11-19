@@ -413,7 +413,11 @@ export async function runScenario(scenario: Scenario, opts: RunOptions): Promise
     log(`    ↺ @global ${f.rule} → ${f.actions.map((a) => `${a.kind}(${a.target ?? ''})`).join(' → ')}${f.error ? `  ! ${f.error}` : ''}`);
   });
   await opts.context.beforeScenario?.({ driver: opts.driver, world });
-  await opts.driver.resetApp();
+  // A reset that fails (the app did not launch) fails this scenario only; the suite goes on.
+  const resetError = await opts.driver.resetApp().then(
+    () => undefined,
+    (e: unknown) => `app reset failed: ${e instanceof Error ? e.message : String(e)}`,
+  );
   log(`\n  Scenario: ${scenario.name}`);
   const steps: StepReport[] = [];
   let failed = false;
@@ -432,6 +436,7 @@ export async function runScenario(scenario: Scenario, opts: RunOptions): Promise
   const expanded = await expandRoutines(scenario.steps, opts);
   // A rule that could not be planned fails the scenario up front, never silently stops applying.
   if (globals.errors.length && expanded[0]) expanded[0] = { ...expanded[0], error: expanded[0].error ?? globals.errors.join('; ') };
+  if (resetError && expanded[0]) expanded[0] = { ...expanded[0], error: resetError };
   for (const step of expanded) {
     const base: StepReport = {
       step: step.text,

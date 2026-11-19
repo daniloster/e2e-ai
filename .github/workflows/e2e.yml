@@ -20,6 +20,9 @@ permissions:
   contents: read
 
 env:
+  # Mobile actions and assertions poll the screen up to 20 s: shared CI simulators and emulators are
+  # much slower than a laptop (a passing step still moves on as soon as its target is there).
+  E2E_STEP_TIMEOUT_MS: 20000
   APPIUM_VERSION: 4.0.0
   UIAUTOMATOR2_VERSION: 9.2.2
   XCUITEST_VERSION: 13.1.3

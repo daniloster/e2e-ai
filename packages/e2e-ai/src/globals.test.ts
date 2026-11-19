@@ -160,3 +160,13 @@ describe('@global rules at run time', () => {
     expect(r.steps[0]?.error).toContain('has no reviewed plan');
   });
 });
+
+describe('app reset at run time', () => {
+  it('a reset that fails fails that scenario only, with the reason on its first step', async () => {
+    const driver = { ...sheetDriver(), resetApp: () => Promise.reject(new Error('Timed out attempting to launch app.')) };
+    const r = await runScenario(scenario!, { context, driver, llm: scriptedLlm(), cache: memoryCache(), timeoutMs: 300 });
+    expect(r.status).toBe('failed');
+    expect(r.steps[0]?.error).toBe('app reset failed: Timed out attempting to launch app.');
+    expect(driver.taps).toEqual([]);
+  });
+});

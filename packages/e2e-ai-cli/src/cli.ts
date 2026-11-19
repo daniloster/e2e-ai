@@ -178,6 +178,7 @@ interface SuiteOptions {
 /** Runs every matching scenario once; the driver must be started. */
 async function runSuite(o: SuiteOptions): Promise<ScenarioReport[]> {
   const t = o.cfg.targets[o.target];
+  const stepTimeoutMs = Number(t?.stepTimeoutMs) || undefined;
   const screenshots = {
     dir: join(o.runDir, 'screenshots'),
     rel: 'screenshots',
@@ -241,6 +242,7 @@ async function runSuite(o: SuiteOptions): Promise<ScenarioReport[]> {
           ...(o.freshScenario && sc.name === o.freshScenario ? { bypassCache: true } : {}),
           log: (l) => console.log(l),
           ...(o.llm ? { llm: o.llm } : {}),
+          ...(stepTimeoutMs ? { timeoutMs: stepTimeoutMs } : {}),
         }),
       );
     }

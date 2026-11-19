@@ -212,7 +212,12 @@ export function createAppiumDriver(opts: AppiumOptions): Driver {
     },
     async resetApp() {
       await exec('mobile: terminateApp', appArg()).catch(() => undefined);
-      await exec('mobile: activateApp', appArg());
+      // A loaded simulator or emulator can time out launching the app once ("Timed out attempting
+      // to launch app", seen on CI's cold macOS runners); the second launch then usually succeeds.
+      await exec('mobile: activateApp', appArg()).catch(async () => {
+        await exec('mobile: terminateApp', appArg()).catch(() => undefined);
+        await exec('mobile: activateApp', appArg());
+      });
       // A link sent while the app is still starting (a debug build loads its JavaScript first) is
       // dropped by the OS on Android, so the reset never happened: wait for a settled screen.
       await waitForSettledScreen();
