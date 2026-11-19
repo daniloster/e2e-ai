@@ -1,3 +1,5 @@
+import { existsSync } from 'node:fs';
+
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { parseUiAutomator } from './drivers/adb.ts';
@@ -106,7 +108,13 @@ describe('overlays in native page sources', () => {
   });
 });
 
-describe('web snapshot in a real browser', () => {
+// Needs Playwright's Chromium (`npx playwright install chromium`); skipped on machines without it.
+const hasChromium = await import('@playwright/test').then(
+  ({ chromium }) => existsSync(chromium.executablePath()),
+  () => false,
+);
+
+describe.skipIf(!hasChromium)('web snapshot in a real browser', () => {
   it('names dialogs by their heading and maps native and custom elements', { timeout: 60_000 }, async () => {
     configureRoles({ web: { 'acme-button': 'button' } });
     const { chromium } = await import('@playwright/test');
