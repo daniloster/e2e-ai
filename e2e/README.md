@@ -182,7 +182,7 @@ Routine: create user "${email}" with password "${password}" and notes: ${table:n
 
 ```json
 {
-  "model": { "provider": "openai", "endpoint": "http://127.0.0.1:11434/v1", "name": "qwen3:4b" },
+  "model": { "provider": "openai", "endpoint": "http://127.0.0.1:11434/v1", "name": "qwen3-vl:4b-instruct-q4_K_M" },
   "docs": { "api": ["docs/notes-api.md"], "guide": "docs/app-guide.md" },
   "api": { "baseUrl": "http://127.0.0.1:4010" },
   "targets": {

@@ -10,7 +10,7 @@ Developers write **only**:
 | `e2e/e2e-ai.config.json` | Model endpoint, docs, API base URL, MCP driver servers per target, report folders |
 | `e2e/reports/templates/*.html` | Report templates — also the model's brief for laying out the report |
 
-No step definitions, no TypeScript context. The **pocket model** (default `qwen3:4b`, any OpenAI-compatible
+No step definitions, no TypeScript context. The **pocket model** (default `qwen3-vl:4b-instruct-q4_K_M`, the benchmark winner; any OpenAI-compatible
 endpoint: llama.cpp `llama-server`, Ollama `/v1`, vLLM, LM Studio) reads the docs and plans every step;
 **MCP servers** drive the apps; deterministic code checks everything the model says.
 
