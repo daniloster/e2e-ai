@@ -17,6 +17,7 @@
     "deploy:prod": "npm run build && wrangler deploy"
   },
   "dependencies": {
+    "@pn/core": "*",
     "@pn/design-tokens": "*",
     "@pn/i18n": "*",
     "firebase": "12.19.0",

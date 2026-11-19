@@ -1,7 +1,8 @@
 // Pocket Notes, the deliberately small web app the e2e tool is spiked against: sign in, list notes,
-// add, tick done, delete, sign out. Hash routes (#/signin, #/notes); `?session=<token>` signs in
+// add, search, tick done, delete, sign out. Hash routes (#/signin, #/notes); `?session=<token>` signs in
 // directly (the e2e "access" shortcut).
 import { useCallback, useEffect, useState, type FormEvent, type JSX } from 'react';
+import { searchNotes } from '@pn/core';
 import { createTranslator } from '@pn/i18n';
 
 import { notesApi, type Note, type Session } from './api';
@@ -109,7 +110,9 @@ function SignInScreen({ onSignedIn }: { onSignedIn(s: Session): void }): JSX.Ele
 function NotesScreen({ session, onSignOut }: { session: Session; onSignOut(): void }): JSX.Element {
   const [notes, setNotes] = useState<Note[] | null>(null);
   const [draft, setDraft] = useState('');
+  const [query, setQuery] = useState('');
   const [failed, setFailed] = useState(false);
+  const visible = notes ? searchNotes(notes, query) : [];
 
   const reload = useCallback(() => {
     notesApi.list(session.token).then(setNotes, () => setFailed(true));
@@ -151,12 +154,33 @@ function NotesScreen({ session, onSignOut }: { session: Session; onSignOut(): vo
       {failed && <p role="alert">{t('notes.loadFailed')}</p>}
       {notes && notes.length === 0 && <p data-testid="notes-empty">{t('notes.empty')}</p>}
       {notes && notes.length > 0 && (
+        <div className={query ? styles.row : undefined} role="search">
+          <label htmlFor="notes-search" className={styles.visuallyHidden}>
+            {t('notes.searchLabel')}
+          </label>
+          <input
+            id="notes-search"
+            data-testid="notes-search"
+            type="search"
+            placeholder={t('notes.searchPlaceholder')}
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+          {query && (
+            <button type="button" className={styles.link} data-testid="notes-search-clear" onClick={() => setQuery('')}>
+              {t('notes.clearSearch')}
+            </button>
+          )}
+        </div>
+      )}
+      {notes && notes.length > 0 && visible.length === 0 && <p data-testid="notes-no-matches">{t('notes.noMatches')}</p>}
+      {visible.length > 0 && (
         <>
           <p className={styles.muted} data-testid="notes-count">
-            {t('notes.count', { count: notes.length })}
+            {t('notes.count', { count: visible.length })}
           </p>
           <ul className={styles.list}>
-            {notes.map((n) => (
+            {visible.map((n) => (
               <li key={n.id} data-testid={`note-row-${n.id}`} className={n.done ? styles.done : undefined}>
                 <label>
                   <input

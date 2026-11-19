@@ -68,6 +68,10 @@ export const es: Readonly<Record<keyof typeof enGB, string>> = {
   'notes.count_one': '{count} nota',
   'notes.count_other': '{count} notas',
   'notes.deleteA11y': 'Eliminar {title}',
+  'notes.searchLabel': 'Buscar notas',
+  'notes.searchPlaceholder': 'Busca en títulos y descripciones',
+  'notes.clearSearch': 'Borrar búsqueda',
+  'notes.noMatches': 'Ninguna nota coincide con tu búsqueda.',
   'notes.signOut': 'Salir',
   'notes.loadFailed': 'No se pudieron cargar las notas. Inténtalo de nuevo.',
 

@@ -67,6 +67,10 @@ export const ptBR: Readonly<Record<keyof typeof enGB, string>> = {
   'notes.count_one': '{count} nota',
   'notes.count_other': '{count} notas',
   'notes.deleteA11y': 'Excluir {title}',
+  'notes.searchLabel': 'Buscar notas',
+  'notes.searchPlaceholder': 'Busque em títulos e descrições',
+  'notes.clearSearch': 'Limpar busca',
+  'notes.noMatches': 'Nenhuma nota corresponde à sua busca.',
   'notes.signOut': 'Sair',
   'notes.loadFailed': 'Não foi possível carregar as notas. Tente novamente.',
 

@@ -11,5 +11,5 @@
     "allowImportingTsExtensions": true
   },
   "include": ["src/**/*.ts", "src/**/*.tsx", "vite/**/*.ts", "vite.config.ts", "package.json"],
-  "references": [{ "path": "../../apps-modules/i18n" }, { "path": "../../apps-modules/design-tokens" }]
+  "references": [{ "path": "../../apps-modules/core" }, { "path": "../../apps-modules/i18n" }, { "path": "../../apps-modules/design-tokens" }]
 }

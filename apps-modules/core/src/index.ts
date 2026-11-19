@@ -7,3 +7,5 @@ export { reduce } from './reducer';
 export { replay } from './replay';
 export type { ShareDecodeError, ShareDecodeResult, SharePayload } from './codec';
 export { CODEC_VERSION, decodeShare, encodeShare } from './codec';
+export type { Searchable } from './search';
+export { matchesSearch, normalizeForSearch, searchNotes } from './search';

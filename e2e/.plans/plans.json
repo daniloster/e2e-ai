@@ -1,4 +1,28 @@
 {
+  "051f3b959f087a9f": {
+    "step": "I search my notes for \"PLUMBER\"",
+    "actions": [
+      {
+        "kind": "fill",
+        "target": "Search notes field",
+        "value": "PLUMBER"
+      }
+    ],
+    "resolved": {
+      "web:Search notes field": {
+        "testId": "notes-search",
+        "role": "textbox",
+        "name": "Search notes"
+      },
+      "mobile:Search notes field": {
+        "testId": "notes-search",
+        "role": "textbox",
+        "name": "Search notes"
+      }
+    },
+    "model": "qwen3-vl:4b-instruct-q4_K_M",
+    "createdAt": "2026-11-19T05:14:06.473Z"
+  },
   "09166cf58244c2be": {
     "step": "I should see 1 note in the list",
     "actions": [
@@ -10,14 +34,14 @@
     ],
     "resolved": {
       "mobile:notes in the list#group": {
-        "role": "listitem",
+        "role": "group",
         "name": "",
         "pattern": "note-row-*"
       },
       "web:notes in the list#group": {
         "role": "listitem",
         "name": "",
-        "pattern": "role:listitem"
+        "pattern": "note-row-*"
       }
     },
     "model": "qwen3:4b",
@@ -36,6 +60,19 @@
     "model": "qwen3:4b",
     "createdAt": "2026-11-18T20:40:44.996Z"
   },
+  "13544d739bf3cd53": {
+    "step": "I should see \"No notes match your search.\"",
+    "actions": [
+      {
+        "kind": "expect_visible",
+        "target": "search result message",
+        "value": "No notes match your search."
+      }
+    ],
+    "resolved": {},
+    "model": "qwen3-vl:4b-instruct-q4_K_M",
+    "createdAt": "2026-11-19T05:14:19.273Z"
+  },
   "13a99a1ac6dfa3a0": {
     "step": "a user \"ana@example.com\" with password \"s3cret!\" exists",
     "actions": [
@@ -52,6 +89,19 @@
     "resolved": {},
     "model": "qwen3:4b",
     "createdAt": "2026-11-18T20:27:13.415Z"
+  },
+  "157255fd4c02d5ee": {
+    "step": "I should not see \"Pay rent\"",
+    "actions": [
+      {
+        "kind": "expect_hidden",
+        "target": "note",
+        "value": "Pay rent"
+      }
+    ],
+    "resolved": {},
+    "model": "qwen3-vl:4b-instruct-q4_K_M",
+    "createdAt": "2026-11-19T05:14:01.235Z"
   },
   "161b3aed47947ba3": {
     "step": "I should see \"Sign in to your notes\"",
@@ -164,6 +214,30 @@
     "model": "qwen3:4b",
     "createdAt": "2026-11-18T20:27:12.126Z"
   },
+  "3eb25ef1f3c63a46": {
+    "step": "I search my notes for \"milk\"",
+    "actions": [
+      {
+        "kind": "fill",
+        "target": "Search notes field",
+        "value": "milk"
+      }
+    ],
+    "resolved": {
+      "web:Search notes field": {
+        "testId": "notes-search",
+        "role": "textbox",
+        "name": "Search notes"
+      },
+      "mobile:Search notes field": {
+        "testId": "notes-search",
+        "role": "textbox",
+        "name": "Search notes"
+      }
+    },
+    "model": "qwen3-vl:4b-instruct-q4_K_M",
+    "createdAt": "2026-11-19T05:13:59.500Z"
+  },
   "3f5cfa3ce79f90bf": {
     "step": "I am signed in as \"ana@example.com\"",
     "actions": [
@@ -196,6 +270,29 @@
     "resolved": {},
     "model": "qwen3:4b",
     "createdAt": "2026-11-18T20:40:45.697Z"
+  },
+  "4a328cbd09f53955": {
+    "step": "I clear the search",
+    "actions": [
+      {
+        "kind": "tap",
+        "target": "Clear search button"
+      }
+    ],
+    "resolved": {
+      "web:Clear search button": {
+        "testId": "notes-search-clear",
+        "role": "button",
+        "name": "Clear search"
+      },
+      "mobile:Clear search button": {
+        "testId": "notes-search-clear",
+        "role": "button",
+        "name": "CLEAR SEARCH"
+      }
+    },
+    "model": "qwen3-vl:4b-instruct-q4_K_M",
+    "createdAt": "2026-11-19T05:14:24.926Z"
   },
   "5904945a62d31ac7": {
     "step": "I should see \"Pay rent\"",
@@ -240,6 +337,42 @@
     "resolved": {},
     "model": "qwen3:4b",
     "createdAt": "2026-11-18T20:26:57.126Z"
+  },
+  "80891f7862c12a04": {
+    "step": "create a note with title \"Buy milk\" and description \"Semi-skimmed\" via API",
+    "actions": [
+      {
+        "kind": "call",
+        "fn": "POST /__test/notes",
+        "args": {
+          "ownerEmail": "ana@example.com",
+          "title": "Buy milk",
+          "description": "Semi-skimmed",
+          "done": false
+        }
+      }
+    ],
+    "resolved": {},
+    "model": "qwen3-vl:4b-instruct-q4_K_M",
+    "createdAt": "2026-11-19T05:13:55.161Z"
+  },
+  "889eaca0f0dac1c6": {
+    "step": "create a note with title \"Pay rent\" and description \"Due on the first\" via API",
+    "actions": [
+      {
+        "kind": "call",
+        "fn": "POST /__test/notes",
+        "args": {
+          "ownerEmail": "ana@example.com",
+          "title": "Pay rent",
+          "description": "Due on the first",
+          "done": false
+        }
+      }
+    ],
+    "resolved": {},
+    "model": "qwen3-vl:4b-instruct-q4_K_M",
+    "createdAt": "2026-11-19T05:13:57.702Z"
   },
   "9234ca4b80f33a84": {
     "step": "do not allow firebase user analytics",
@@ -463,6 +596,30 @@
     "model": "qwen3:4b",
     "createdAt": "2026-11-18T20:27:01.401Z"
   },
+  "bcf7cbeabe3d61cb": {
+    "step": "I search my notes for \"first\"",
+    "actions": [
+      {
+        "kind": "fill",
+        "target": "Search notes field",
+        "value": "first"
+      }
+    ],
+    "resolved": {
+      "web:Search notes field": {
+        "testId": "notes-search",
+        "role": "textbox",
+        "name": "Search notes"
+      },
+      "mobile:Search notes field": {
+        "testId": "notes-search",
+        "role": "textbox",
+        "name": "Search notes"
+      }
+    },
+    "model": "qwen3-vl:4b-instruct-q4_K_M",
+    "createdAt": "2026-11-19T05:14:12.315Z"
+  },
   "beb3d7b283c83b3e": {
     "step": "I should not see \"Bo's secret\"",
     "actions": [
@@ -614,6 +771,24 @@
     "model": "qwen3:4b",
     "createdAt": "2026-11-19T00:24:20.497Z"
   },
+  "db4f66e876522e10": {
+    "step": "create a note with title \"Call the plumber\" and description \"Kitchen tap leaks\" via API",
+    "actions": [
+      {
+        "kind": "call",
+        "fn": "POST /__test/notes",
+        "args": {
+          "ownerEmail": "ana@example.com",
+          "title": "Call the plumber",
+          "description": "Kitchen tap leaks",
+          "done": false
+        }
+      }
+    ],
+    "resolved": {},
+    "model": "qwen3-vl:4b-instruct-q4_K_M",
+    "createdAt": "2026-11-19T05:13:56.414Z"
+  },
   "deaae54b6da9fadd": {
     "step": "I sign in as \"ana@example.com\" with password \"not-it\"",
     "actions": [
@@ -664,6 +839,30 @@
     "model": "qwen3:4b",
     "createdAt": "2026-11-18T20:40:41.449Z"
   },
+  "df56c72dbc1f68d3": {
+    "step": "I search my notes for \"taxes\"",
+    "actions": [
+      {
+        "kind": "fill",
+        "target": "Search notes field",
+        "value": "taxes"
+      }
+    ],
+    "resolved": {
+      "web:Search notes field": {
+        "testId": "notes-search",
+        "role": "textbox",
+        "name": "Search notes"
+      },
+      "mobile:Search notes field": {
+        "testId": "notes-search",
+        "role": "textbox",
+        "name": "Search notes"
+      }
+    },
+    "model": "qwen3-vl:4b-instruct-q4_K_M",
+    "createdAt": "2026-11-19T05:14:18.176Z"
+  },
   "e1e6df0cc7e6d137": {
     "step": "I should see \"Buy milk\"",
     "actions": [
@@ -706,14 +905,14 @@
     ],
     "resolved": {
       "mobile:notes in the list#group": {
-        "role": "listitem",
+        "role": "group",
         "name": "",
         "pattern": "note-row-*"
       },
       "web:notes in the list#group": {
         "role": "listitem",
         "name": "",
-        "pattern": "role:listitem"
+        "pattern": "note-row-*"
       }
     },
     "model": "qwen3:4b",
@@ -730,14 +929,14 @@
     ],
     "resolved": {
       "mobile:notes in the list#group": {
-        "role": "listitem",
+        "role": "group",
         "name": "",
         "pattern": "note-row-*"
       },
       "web:notes in the list#group": {
         "role": "listitem",
         "name": "",
-        "pattern": "role:listitem"
+        "pattern": "note-row-*"
       }
     },
     "model": "qwen3:4b",

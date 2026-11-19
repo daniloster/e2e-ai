@@ -48,3 +48,5 @@ delete short notes. Each note has a title and an optional description.
 - Then there should be 3 notes → expect count notes in the list = 3
 - Then I should not see "Water plants" → expect hidden note = "Water plants"
 - Then I should see the message "Saved" → expect visible message = "Saved"
+- When I search my notes for "rent" → fill Search notes field = "rent"
+- When I clear the search → tap Clear search button

@@ -1,6 +1,7 @@
-// The signed-in user's notes: add, tick done, delete, sign out. Same testIDs as the web app.
+// The signed-in user's notes: add, search, tick done, delete, sign out. Same testIDs as the web app.
 import type React from 'react';
 import { useCallback, useEffect, useState } from 'react';
+import { searchNotes } from '@pn/core';
 import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -15,7 +16,9 @@ export function NotesScreen(): React.JSX.Element {
   const token = state.session?.token ?? '';
   const [notes, setNotes] = useState<Note[] | null>(null);
   const [draft, setDraft] = useState('');
+  const [query, setQuery] = useState('');
   const [failed, setFailed] = useState(false);
+  const visible = searchNotes(notes ?? [], query);
 
   const reload = useCallback(() => {
     listNotes(token).then(setNotes, () => setFailed(true));
@@ -68,12 +71,41 @@ export function NotesScreen(): React.JSX.Element {
           </Text>
         )}
         {notes !== null && notes.length > 0 && (
+          <View style={styles.row}>
+            <TextInput
+              testID="notes-search"
+              accessibilityLabel={t('notes.searchLabel')}
+              placeholder={t('notes.searchPlaceholder')}
+              placeholderTextColor={UI_COLORS.muted}
+              value={query}
+              onChangeText={setQuery}
+              autoCapitalize="none"
+              autoCorrect={false}
+              returnKeyType="search"
+              style={styles.input}
+            />
+            {query ? (
+              <Button
+                testID="notes-search-clear"
+                variant="ghost"
+                label={t('notes.clearSearch')}
+                onPress={() => setQuery('')}
+              />
+            ) : null}
+          </View>
+        )}
+        {notes !== null && notes.length > 0 && visible.length === 0 && (
+          <Text testID="notes-no-matches" style={styles.muted}>
+            {t('notes.noMatches')}
+          </Text>
+        )}
+        {visible.length > 0 && (
           <Text testID="notes-count" style={styles.muted}>
-            {t('notes.count', { count: notes.length })}
+            {t('notes.count', { count: visible.length })}
           </Text>
         )}
         <FlatList
-          data={notes ?? []}
+          data={visible}
           keyExtractor={n => n.id}
           renderItem={({ item }) => (
             <View testID={`note-row-${item.id}`} role="listitem" style={styles.item}>

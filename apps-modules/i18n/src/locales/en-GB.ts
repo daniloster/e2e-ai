@@ -66,6 +66,10 @@ export const enGB = {
   'notes.count_one': '{count} note',
   'notes.count_other': '{count} notes',
   'notes.deleteA11y': 'Delete {title}',
+  'notes.searchLabel': 'Search notes',
+  'notes.searchPlaceholder': 'Search titles and descriptions',
+  'notes.clearSearch': 'Clear search',
+  'notes.noMatches': 'No notes match your search.',
   'notes.signOut': 'Sign out',
   'notes.loadFailed': 'Notes could not be loaded. Try again.',
 
