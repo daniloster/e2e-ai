@@ -161,6 +161,16 @@ describe('model specs and benchmark recommendation', async () => {
     expect(parseModelSpecs('qwen3:4b@http://a/v1', d)[0]).toMatchObject({ name: 'qwen3:4b', endpoint: 'http://a/v1' });
     expect(parseModelSpecs('"x">>http://legacy/v1', d)[0]).toMatchObject({ name: 'x', endpoint: 'http://legacy/v1' });
   });
+  it('takes a hosted model\'s key (by env var name) and reasoning effort from [options]', () => {
+    const d = { provider: 'openai' as const, endpoint: 'http://cfg/v1', name: 'x', apiKeyEnv: 'LOCAL_KEY' };
+    const [m] = parseModelSpecs('"openai/gpt-oss-20b"@https://api.groq.com/openai/v1[key=GROQ_API_KEY, reasoning=low]', d);
+    expect(m).toEqual({ provider: 'openai', name: 'openai/gpt-oss-20b', endpoint: 'https://api.groq.com/openai/v1', apiKeyEnv: 'GROQ_API_KEY', reasoningEffort: 'low' });
+    // Another endpoint never inherits the default model's key; the default endpoint does.
+    expect(parseModelSpecs('"y"@http://other/v1', d)[0]).not.toHaveProperty('apiKeyEnv');
+    expect(parseModelSpecs('"y"', d)[0]).toMatchObject({ apiKeyEnv: 'LOCAL_KEY' });
+    expect(() => parseModelSpecs('"y"@http://a/v1[key=gsk_live_secret]', d)).toThrow('key=ENV_VAR_NAME');
+    expect(() => parseModelSpecs('"y"@http://a/v1[reasoning=max]', d)).toThrow('bad model option');
+  });
   it('recommends by pass rate, then fewest repairs, then speed', () => {
     const m = (name: string, passRate: number, repairs: number, speed: number) =>
       ({ name, suite: { passRate, passed: passRate, scenarios: 100, guardFixes: repairs, replans: 0, msPerPlannedStep: speed }, planner: [] }) as never;
